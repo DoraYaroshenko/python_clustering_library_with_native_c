@@ -2,7 +2,7 @@ import math
 import sys
 import numpy as np
 import pandas as pd
-import symnmfmodule
+import symnmf
 
 np.random.seed(1234)
 
@@ -66,14 +66,14 @@ if _name_ == "_main_":
         D = degree_matrix(A) # maybe should use ddg method from c file instead
         W = normalized_similarity_mat(D, A) # should have used norm from c file instead apparently
         H = init_H(W, K)
-        H = symnmfmodule.symnmf(H, W)
+        H = symnmf.symnmf(H, W)
         print_mat(H)
     elif goal == "sym":
-        A = symnmfmodule.sym(points_array)
+        A = symnmf.sym(points_array)
         print_mat(A)
     elif goal == "ddg":
-        D = symnmfmodule.ddg(points_array)
+        D = symnmf.ddg(points_array)
         print_mat(D)
     else: # goal == "norm"
-        W = symnmfmodule.norm(points_array)
+        W = symnmf.norm(points_array)
         print_mat(w)
