@@ -62,9 +62,9 @@ if _name_ == "_main_":
     points_array=vectors.to_numpy() # okay, returns actual matrix in numpy form..
 
     if goal == "symnmf":
-        A = similarity_matrix(points_array) # maybe should use sym method from c file instead.
-        D = degree_matrix(A) # maybe should use ddg method from c file instead
-        W = normalized_similarity_mat(D, A) # should have used norm from c file instead apparently
+        A = symnmf.sym(points_array) # maybe should use sym method from c file instead.
+        D = symnmf.ddg(A) # maybe should use ddg method from c file instead
+        W = symnmf.norm(D, A) # should have used norm from c file instead apparently
         H = init_H(W, K)
         H = symnmf.symnmf(H, W)
         print_mat(H)

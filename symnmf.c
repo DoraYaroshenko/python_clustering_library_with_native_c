@@ -2,34 +2,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "symnmf.h"
 
-typedef struct
+void freeMatrix(float **matrix, int n)
 {
-    double *coordinates;
-    int dimension;
-} vector;
-
-typedef struct
-{
-    vector *all_vectors;
-    int num_vectors;
-} all_vecs;
-
-void freeMatrix(float** matrix,int n){
-    for(int i=0;i<n;i++){
+    for (int i = 0; i < n; i++)
+    {
         free(matrix[i]);
     }
     free(matrix);
 }
 
-float** matrixMultiplication(float** a, float** b, int n){
-    float** resMatrix = (float**)calloc(n,sizeof(float*));
-    for(int i=0;i<n;i++){
-        resMatrix[i] = (float*)calloc(n,sizeof(float));
-        for(int j=0;j<n;j++){
+float **matrixMultiplication(float **a, float **b, int rows1, int rows2, int cols2)
+{
+    float **resMatrix = (float **)calloc(rows1, sizeof(float *));
+    for (int i = 0; i < rows1; i++)
+    {
+        resMatrix[i] = (float *)calloc(cols2, sizeof(float));
+        for (int j = 0; j < cols2; j++)
+        {
             int sum = 0;
-            for(int k=0;k<n;k++){
-                sum+=a[i][k]*b[k][j];
+            for (int k = 0; k < rows2; k++)
+            {
+                sum += a[i][k] * b[k][j];
             }
             resMatrix[i][j] = sum;
         }
@@ -48,14 +43,17 @@ double distance(vector v1, vector v2)
     return sqrt(sum);
 }
 
-void printMatrix(float** matrix, int n)
+void printMatrix(float **matrix, int n)
 {
     int i;
     int j;
     for (i = 0; i < n; i++)
     {
-        for(j=0;j<n;j++){
-            printf("%.4f",matrix[i][j]);
+        for (j = 0; j < n; j++)
+        {
+            printf("%.4f", matrix[i][j]);
+            if (j != n - 1)
+                printf(",");
         }
     }
 }
@@ -151,64 +149,75 @@ all_vecs getInput()
     return all_vectors;
 }
 
-float** similarityMatrix(all_vecs points){
+float **similarityMatrix(all_vecs points)
+{
     int n = points.num_vectors;
-    float** outputMatrix = (float**)calloc(n,sizeof(float*));
-    for(int i=0;i<n;i++){
-        outputMatrix[i] = (float*)calloc(n,sizeof(float));
-        for(int j=0;j<n;j++){
-            float exponent = -pow(distance(points.all_vectors[i],points.all_vectors[j]),2)/2;
+    float **outputMatrix = (float **)calloc(n, sizeof(float *));
+    for (int i = 0; i < n; i++)
+    {
+        outputMatrix[i] = (float *)calloc(n, sizeof(float));
+        for (int j = 0; j < n; j++)
+        {
+            float exponent = -pow(distance(points.all_vectors[i], points.all_vectors[j]), 2) / 2;
             outputMatrix[i][j] = exp(exponent);
         }
     }
     return outputMatrix;
 }
-float** diagonalDegreeMatrix(all_vecs points){
+float **diagonalDegreeMatrix(all_vecs points)
+{
     int n = points.num_vectors;
-    float** outputMatrix = (float**)calloc(n,sizeof(float*));
-    float** similarityMat = similarityMatrix(points);
-    for(int i=0;i<n;i++){
-        outputMatrix[i] = (float*)calloc(n,sizeof(float));
-        int rowSum=0;
-        for(int j=0;j<n;j++){
-            rowSum+=similarityMat[i][j];
+    float **outputMatrix = (float **)calloc(n, sizeof(float *));
+    float **similarityMat = similarityMatrix(points);
+    for (int i = 0; i < n; i++)
+    {
+        outputMatrix[i] = (float *)calloc(n, sizeof(float));
+        int rowSum = 0;
+        for (int j = 0; j < n; j++)
+        {
+            rowSum += similarityMat[i][j];
         }
         outputMatrix[i][i] = rowSum;
     }
-    freeMatrix(similarityMat,n);
+    freeMatrix(similarityMat, n);
     return outputMatrix;
 }
-float** normalizedSimilarityMatrix(all_vecs points){
+float **normalizedSimilarityMatrix(all_vecs points)
+{
     int n = points.num_vectors;
-    float** similarityMat = similarityMatrix(points);
-    float** degreeMat = diagonalDegreeMatrix(points);
-    for(int i=0;i<n;i++){
-        degreeMat[i][i] = 1/sqrt(degreeMat[i][i]);
+    float **similarityMat = similarityMatrix(points);
+    float **degreeMat = diagonalDegreeMatrix(points);
+    for (int i = 0; i < n; i++)
+    {
+        degreeMat[i][i] = 1 / sqrt(degreeMat[i][i]);
     }
-    float** mulMat = matrixMultiplication(degreeMat,similarityMat,n);
-    float** resMatrix = matrixMultiplication(mulMat,degreeMat,n);
-    freeMatrix(mulMat,n);
-    freeMatrix(similarityMat,n);
-    freeMatrix(degreeMat,n);
+    float **mulMat = matrixMultiplication(degreeMat, similarityMat, n,n,n);
+    float **resMatrix = matrixMultiplication(mulMat, degreeMat, n,n,n);
+    freeMatrix(mulMat, n);
+    freeMatrix(similarityMat, n);
+    freeMatrix(degreeMat, n);
     return resMatrix;
 }
 
 int main(int argc, char **argv)
 {
-    char* goal = argv[1];
-    char* path = argv[2];
+    char *goal = argv[1];
+    char *path = argv[2];
     all_vecs points = getInput();
     int n = points.num_vectors;
-    float** outputMatrix;
-    if (!strcmp(goal, "sym")){
+    float **outputMatrix;
+    if (!strcmp(goal, "sym"))
+    {
         outputMatrix = similarityMatrix(points);
     }
-    if (!strcmp(goal, "ddg")){
+    if (!strcmp(goal, "ddg"))
+    {
         outputMatrix = diagonalDegreeMatrix(points);
     }
-    if(!strcmp(goal,"norm")){
+    if (!strcmp(goal, "norm"))
+    {
         outputMatrix = normalizedSimilarityMatrix(points);
     }
     printMatrix(outputMatrix, n);
-    freeMatrix(outputMatrix,n);
+    freeMatrix(outputMatrix, n);
 }
