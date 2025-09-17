@@ -2,60 +2,58 @@
 #define EPS 0.0001
 #include <Python.h>
 #include "symnmf.h"
-#include "symnmf.c"
 
-all_vecs parseDataPoints(PyObject *points)
+all_vecs *parseDataPoints(PyObject *points)
 {
-    all_vecs all_vectors;
+    all_vecs *all_vectors = (all_vecs*)malloc(sizeof(all_vecs));
     int N = PyList_Size(points);
     if (N == 0)
         return NULL;
-
     PyObject *first_point = PyList_GetItem(points, 0);
     if (!PyList_Check(first_point))
         return NULL;
     int dim = PyList_Size(first_point);
 
-    all_vectors.num_vectors = N;
-    all_vectors.all_vectors = (vector *)malloc(sizeof(vector) * N);
-    if (all_vectors.all_vectors == NULL)
+    all_vectors->num_vectors = N;
+    all_vectors->all_vectors = (vector *)malloc(sizeof(vector) * N);
+    if (all_vectors->all_vectors == NULL)
         return NULL;
     for (int i = 0; i < N; i++)
     {
         PyObject *point = PyList_GetItem(points, i);
         if (!PyList_Check(point) || PyList_Size(point) != dim)
             return NULL;
-        all_vectors.all_vectors[i].dimension = dim;
-        all_vectors.all_vectors[i].coordinates = (double *)malloc(sizeof(double) * dim);
-        if (all_vectors.all_vectors[i].coordinates == NULL)
+        all_vectors->all_vectors[i].dimension = dim;
+        all_vectors->all_vectors[i].coordinates = (double *)malloc(sizeof(double) * dim);
+        if (all_vectors->all_vectors[i].coordinates == NULL)
             return NULL;
         for (int j = 0; j < dim; j++)
         {
             PyObject *coord = PyList_GetItem(point, j);
             if (!PyFloat_Check(coord))
                 return NULL;
-            all_vectors.all_vectors[i].coordinates[j] = PyFloat_AsDouble(coord);
+            all_vectors->all_vectors[i].coordinates[j] = PyFloat_AsDouble(coord);
         }
     }
     return all_vectors;
 }
 
-float **parseMatrix(PyObject *matrix)
+double **parseMatrix(PyObject *matrix)
 {
     int n = PyList_Size(matrix);
-    float **parsedMatrix = (float **)malloc(sizeof(float *) * n);
+    double **parsedMatrix = (double **)malloc(sizeof(double *) * n);
     if (parsedMatrix == NULL)
         return NULL;
     for (int i = 0; i < n; i++)
     {
         PyObject *row = PyList_GetItem(matrix, i);
-        if (!PyList_Check(row) || PyList_Size(row) != n)
+        if (!PyList_Check(row))
             return NULL;
         int k = PyList_Size(row);
-        parsedMatrix[i] = (float *)malloc(sizeof(float) * k);
+        parsedMatrix[i] = (double *)malloc(sizeof(double) * k);
         for (int j = 0; j < k; j++)
         {
-            float entry = PyList_GetItem(row, j);
+            PyObject *entry = PyList_GetItem(row, j);
             if (!PyFloat_Check(entry))
                 return NULL;
             parsedMatrix[i][j] = PyFloat_AsDouble(entry);
@@ -64,7 +62,7 @@ float **parseMatrix(PyObject *matrix)
     return parsedMatrix;
 }
 
-PyObject *parseResultMatrix(float **matrix, int n, int k)
+PyObject *parseResultMatrix(double **matrix, int n, int k)
 {
     PyObject *resultMat = PyList_New(n);
     for (int i = 0; i < n; i++)
@@ -79,22 +77,22 @@ PyObject *parseResultMatrix(float **matrix, int n, int k)
     return resultMat;
 }
 
-void freeDataPoints(all_vecs *points)
-{
-    int n = points->num_vectors;
-    for (int i = 0; i < n; i++)
-    {
-        free(points->all_vectors[i]);
-    }
-    free(points);
-}
+// void freeDataPoints(all_vecs *points)
+// {
+//     int n = points->num_vectors;
+//     for (int i = 0; i < n; i++)
+//     {
+//         free(points->all_vectors[i]);
+//     }
+//     free(points);
+// }
 
-float **transpose(float **matrix, int rows, int cols)
+double **transpose(double **matrix, int rows, int cols)
 {
-    float **transposedMatrix = (float **)malloc(sizeof(float *) * cols);
+    double **transposedMatrix = (double **)malloc(sizeof(double *) * cols);
     for (int i = 0; i < cols; i++)
     {
-        float *row = (float *)malloc(sizeof(float) * rows);
+        transposedMatrix[i] = (double *)malloc(sizeof(double) * rows);
         for (int j = 0; j < rows; j++)
         {
             transposedMatrix[i][j] = matrix[j][i];
@@ -103,62 +101,72 @@ float **transpose(float **matrix, int rows, int cols)
     return transposedMatrix;
 }
 
-float trace(float **matrix, int n){
-    float sum = 0;
-    for(int i=0;i<n;i++){
-        sum+=matrix[i][i];
+double trace(double **matrix, int n)
+{
+    double sum = 0;
+    for (int i = 0; i < n; i++)
+    {
+        sum += matrix[i][i];
     }
     return sum;
 }
 
-float **substractMatrices(float **A, float **B, int rows, int cols){
-    float** result = (float**)malloc(sizeof(float*)*rows);
-    for(int i=0;i<rows;i++){
-        result[i] = (float*)malloc(sizeof(float)*cols);
-        for(int j=0;j<cols;j++){
-            result[i][j] = A[i][j]-B[i][j];
+double **substractMatrices(double **A, double **B, int rows, int cols)
+{
+    double **result = (double **)malloc(sizeof(double *) * rows);
+    for (int i = 0; i < rows; i++)
+    {
+        result[i] = (double *)malloc(sizeof(double) * cols);
+        for (int j = 0; j < cols; j++)
+        {
+            result[i][j] = A[i][j] - B[i][j];
         }
     }
     return result;
 }
 
-float **updateH(float **H, float **W, int n, int k)
+double **updateH(double **H, double **W, int n, int k)
 {
-    float beta = 0.5;
-    float **updatedH = (float **)malloc(sizeof(float *) * n);
-    float **WH = matrixMultiplication(W, H, n, n, k);
-    float **transposedH = transpose(H);
-    float **HMulTransposedH = matrixMultiplication(H, transposedH, n, k, n);
-    float **HMulTransposedHMulH = matrixMultiplication(HMulTransposedH, H, n, n, k);
+    double beta = 0.5;
+    double **updatedH = (double **)malloc(sizeof(double *) * n);
+    double **WH = matrixMultiplication(W, H, n, n, k);
+    double **transposedH = transpose(H, n, k);
+    double **HMulTransposedH = matrixMultiplication(H, transposedH, n, k, n);
+    double **HMulTransposedHMulH = matrixMultiplication(HMulTransposedH, H, n, n, k);
     for (int i = 0; i < n; i++)
     {
-        updatedH[i] = (float *)malloc(sizeof(float) * k);
+        updatedH[i] = (double *)malloc(sizeof(double) * k);
         for (int j = 0; j < k; j++)
         {
-            updatedH[i][j] = H[i][j]*(1-beta+beta*(WH[i][j]/HMulTransposedHMulH[i][j]));
+            updatedH[i][j] = H[i][j] * (1 - beta + beta * (WH[i][j] / HMulTransposedHMulH[i][j]));
         }
     }
-    freeMatrix(WH);
-    freeMatrix(transposedH);
-    freeMatrix(HMulTransposedH);
-    freeMatrix(HMulTransposedHMulH);
+    freeMatrix(WH, n);
+    freeMatrix(transposedH, k);
+    freeMatrix(HMulTransposedH, n);
+    freeMatrix(HMulTransposedHMulH, n);
     return updatedH;
 }
 
-float **iterateAlgorithm(float** H, float** W, int n, int k){
+double **iterateAlgorithm(double **H, double **W, int n, int k)
+{
     int max_iter = 300;
-    for(int i=0;i<max_iter;i++){
-        float** updatedH = updatedH(H,W,n,k);
-        float** updatedHMinusH = substractMatrices(updatedH, H, n, k);
-        float frobeniusNorm = 0;
-        for(int j=0;j<n;j++){
-            for(int l=0;l<k;l++){
-                frobeniusNorm+=pow(abs(updatedHMinusH[j][l]),2);
+    for (int i = 0; i < max_iter; i++)
+    {
+        double **updatedH = updateH(H, W, n, k);
+        double **updatedHMinusH = substractMatrices(updatedH, H, n, k);
+        double frobeniusNorm = 0;
+        for (int j = 0; j < n; j++)
+        {
+            for (int l = 0; l < k; l++)
+            {
+                frobeniusNorm += pow(fabs(updatedHMinusH[j][l]), 2);
             }
         }
-        if(frobeniusNorm<EPS) break;
-        freeMatrix(updatedHMinusH);
-        freeMatrix(H);
+        if (frobeniusNorm < EPS)
+            break;
+        freeMatrix(updatedHMinusH, n);
+        freeMatrix(H, n);
         H = updatedH;
     }
     return H;
@@ -168,64 +176,66 @@ static PyObject *symnmf(PyObject *self, PyObject *args)
 {
     PyObject *H;
     PyObject *W;
-    if (!PyArg_ParseTuple(args, "OOid", &H, &W))
+    if (!PyArg_ParseTuple(args, "OO", &H, &W))
         return NULL;
     if (!PyList_Check(H) || !PyList_Check(W))
         return NULL;
-    float **parsedH = parseMatrix(H);
-    float **parsedW = parseMatrix(W);
+    double **parsedH = parseMatrix(H);
+    double **parsedW = parseMatrix(W);
     int rowsH = PyList_Size(H);
-    int colsH = PyList_Size(PyList_GetItem(H,0));
-    int rowsH = PyList_Size(W);
-    int colsH = PyList_Size(PyList_GetItem(W,0));
-    return iterateAlgorithm(parsedH,parsedW,rowsH,colsH);
+    int colsH = PyList_Size(PyList_GetItem(H, 0));
+    /*int rowsW = PyList_Size(W);
+    int colsW = PyList_Size(PyList_GetItem(W, 0));
+    */
+    double** result = iterateAlgorithm(parsedH, parsedW, rowsH, colsH);
+    return parseResultMatrix(result, rowsH, colsH);
 }
 
 static PyObject *sym(PyObject *self, PyObject *args)
 {
     PyObject *points;
-    if (!PyArg_ParseTuple(args, "OOid", &points))
+    if (!PyArg_ParseTuple(args, "O", &points))
         return NULL;
     if (!PyList_Check(points))
         return NULL;
-    all_vecs dataPoints = parseDataPoints(points);
-    int n = dataPoints.num_vectors;
-    float **similarityMat = similarityMatrix(dataPoints);
+    all_vecs *dataPoints = parseDataPoints(points);
+    int n = dataPoints->num_vectors;
+    double **similarityMat = similarityMatrix(*dataPoints);
     PyObject *result = parseResultMatrix(similarityMat, n, n);
-    freeMatrix(similarityMat);
-    freeDataPoints(dataPoints);
+    freeMatrix(similarityMat, n);
+    freeMemory(dataPoints, n);
     return result;
 }
 
 static PyObject *ddg(PyObject *self, PyObject *args)
 {
     PyObject *points;
-    if (!PyArg_ParseTuple(args, "OOid", &points))
+    if (!PyArg_ParseTuple(args, "O", &points))
         return NULL;
     if (!PyList_Check(points))
         return NULL;
-    all_vecs dataPoints = parseDataPoints(points);
-    int n = dataPoints.num_vectors;
-    float **diagonalDegreeMat = diagonalDegreeMatrix(dataPoints);
+    all_vecs *dataPoints = parseDataPoints(points);
+    int n = dataPoints->num_vectors;
+    double **diagonalDegreeMat = diagonalDegreeMatrix(*dataPoints);
     PyObject *result = parseResultMatrix(diagonalDegreeMat, n, n);
-    freeMatrix(diagonalDegreeMat);
-    freeDataPoints(dataPoints);
+    freeMatrix(diagonalDegreeMat, n);
+    freeMemory(dataPoints,n);
     return result;
 }
 
 static PyObject *norm(PyObject *self, PyObject *args)
 {
     PyObject *points;
-    if (!PyArg_ParseTuple(args, "OOid", &points))
+    if (!PyArg_ParseTuple(args, "O", &points))
         return NULL;
     if (!PyList_Check(points))
         return NULL;
-    all_vecs dataPoints = parseDataPoints(points);
-    int n = dataPoints.num_vectors;
-    float **normalizedMat = normalizedSimilarityMatrix(dataPoints);
+    all_vecs *dataPoints = parseDataPoints(points);
+    int n = dataPoints->num_vectors;
+    double **normalizedMat = normalizedSimilarityMatrix(*dataPoints);
     PyObject *result = parseResultMatrix(normalizedMat, n, n);
-    freeMatrix(normalizedMat);
-    freeDataPoints(dataPoints);
+    freeMatrix(normalizedMat, n);
+    freeMemory(dataPoints, n);
     return result;
 }
 
@@ -255,7 +265,7 @@ static struct PyModuleDef symnmfmodule = {
     -1,
     symnmfMethods};
 
-PyMODINIT_FUNC PyInit_mysymnmfpp(void)
+PyMODINIT_FUNC PyInit_symnmf(void)
 {
     PyObject *m;
     m = PyModule_Create(&symnmfmodule);

@@ -10,14 +10,18 @@ typedef struct
     int num_vectors;
 } all_vecs;
 
-void freeMatrix(float** matrix,int n);
-float** matrixMultiplication(float** a, float** b, int n);
+void freeMatrix(double** matrix,int n);
+double **matrixMultiplication(double **a, double **b, int rows1, int rows2, int cols2);
 double distance(vector v1, vector v2);
-void printMatrix(float** matrix, int n);
-void freeMemory(all_vecs *all_vectors, int K, int N);
+void printMatrix(double** matrix, int n, int k);
+void freeMemory(all_vecs *all_vectors, int N);
 void printVector(vector *vec);
 void errorHandling();
 all_vecs getInput();
-float **similarityMatrix(all_vecs points);
-float **diagonalDegreeMatrix(all_vecs points);
-float **normalizedSimilarityMatrix(all_vecs points);
+double **similarityMatrix(all_vecs points);
+double **diagonalDegreeMatrix(all_vecs points);
+double **normalizedSimilarityMatrix(all_vecs points);
+
+void testMatrixMultiplication();
+void testDistance();
+void testSimilarityMatrix();

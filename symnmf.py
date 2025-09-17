@@ -6,25 +6,25 @@ import symnmf
 
 np.random.seed(1234)
 
-def similarity_matrix(points_array):
-    squares_sum = np.sum(points_array**2, axis=1, keepdims=True) # לכל שורה במטריצה מעלה את האיבר בכל עמודה בריבוע וסוכם את העמודות. זה נהיה וקטור עמודה שמכיל את הסכומים הנ״ל בכל שורה
-    squared_sub_mat = squares_sum+squares_sum.T # זה מטריצה שבה xij = |x_i|^2+|x_j|^2
-    squared_sub_mat = squared_sub_mat-2*(points_array @ points_array.T) # מכל איבר איקס איי ג׳יי במטריצה הקודמת יצא לנו להחסיר שתיים כפול מ״פ בין איקס איי לאיקס ג׳יי 
-    # סהכ מתקיים מ״חוק הקוסינוסים״ ש*לא* למדנו עם סמיון: ||x_i - x_j||^2 = ||x_i|| + ||x_j|| - 2*<x_i, x_j> and it matches what we have done so far
-    A = np.exp(-squared_sub_mat/2) # מטריצה לפי ההגדרה, עד כדי זה שהאלכסון לא תואם להגדרה
-    np.fill_diagonal(A, 0) # איפוס האלכסון
-    return A
+# def similarity_matrix(points_array):
+#     squares_sum = np.sum(points_array**2, axis=1, keepdims=True) # לכל שורה במטריצה מעלה את האיבר בכל עמודה בריבוע וסוכם את העמודות. זה נהיה וקטור עמודה שמכיל את הסכומים הנ״ל בכל שורה
+#     squared_sub_mat = squares_sum+squares_sum.T # זה מטריצה שבה xij = |x_i|^2+|x_j|^2
+#     squared_sub_mat = squared_sub_mat-2*(points_array @ points_array.T) # מכל איבר איקס איי ג׳יי במטריצה הקודמת יצא לנו להחסיר שתיים כפול מ״פ בין איקס איי לאיקס ג׳יי 
+#     # סהכ מתקיים מ״חוק הקוסינוסים״ ש*לא* למדנו עם סמיון: ||x_i - x_j||^2 = ||x_i|| + ||x_j|| - 2*<x_i, x_j> and it matches what we have done so far
+#     A = np.exp(-squared_sub_mat/2) # מטריצה לפי ההגדרה, עד כדי זה שהאלכסון לא תואם להגדרה
+#     np.fill_diagonal(A, 0) # איפוס האלכסון
+#     return A
 
-def degree_matrix(A):
-    d = np.sum(A, axis=1) # סוכם את האיברים בכל שורה
-    D = np.diag(d) # מציב את האיברים של די, שזה הדרגות שחישבנו קודם, על האלכסון - ושאר המטריצה היא אפסים
-    return D
+# def degree_matrix(A):
+#     d = np.sum(A, axis=1) # סוכם את האיברים בכל שורה
+#     D = np.diag(d) # מציב את האיברים של די, שזה הדרגות שחישבנו קודם, על האלכסון - ושאר המטריצה היא אפסים
+#     return D
 
-def normalized_similarity_mat(D, A):
-    d = np.diag(D)
-    D_power = np.diag(1.0 / np.sqrt(d)) # מעלים את האלכסון בחזקת מינוס חצי שזה כמו אחד חלקי שורש ומציבים אותו באלכסון המטריצה החדשה שלנו
-    W = D_inv_sqrt @ A @ D_inv_sqrt # מחשבים את הביטוי שהוגדר
-    return W
+# def normalized_similarity_mat(D, A):
+#     d = np.diag(D)
+#     D_power = np.diag(1.0 / np.sqrt(d)) # מעלים את האלכסון בחזקת מינוס חצי שזה כמו אחד חלקי שורש ומציבים אותו באלכסון המטריצה החדשה שלנו
+#     W = D_inv_sqrt @ A @ D_inv_sqrt # מחשבים את הביטוי שהוגדר
+#     return W
 
 def init_H(W, K):
     n = W.shape[0]
@@ -57,7 +57,7 @@ def getDataPoints(file_name):
 
 if _name_ == "_main_":
     K, goal, file_name = getInputVariables() #ok
-    vectors = getObservations(file_name) #ok
+    vectors = getDataPoints(file_name) #ok
     N = len(vectors) #ok
     points_array=vectors.to_numpy() # okay, returns actual matrix in numpy form..
 
@@ -67,13 +67,13 @@ if _name_ == "_main_":
         W = symnmf.norm(D, A) # should have used norm from c file instead apparently
         H = init_H(W, K)
         H = symnmf.symnmf(H, W)
-        print_mat(H)
+        printmat(H)
     elif goal == "sym":
         A = symnmf.sym(points_array)
-        print_mat(A)
+        printmat(A)
     elif goal == "ddg":
         D = symnmf.ddg(points_array)
-        print_mat(D)
+        printmat(D)
     else: # goal == "norm"
         W = symnmf.norm(points_array)
-        print_mat(w)
+        printmat(W)
