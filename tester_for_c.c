@@ -50,32 +50,209 @@ void testDistance()
     for (i = 0; i < 3; i++)
     {
         a.coordinates[i] = i;
-        b.coordinates[i] = 2*i;
+        b.coordinates[i] = 2 * i;
     }
     printVector(&a);
     printVector(&b);
-    printf("%f",distance(a,b));
+    printf("%f", distance(a, b));
     free(a.coordinates);
     free(b.coordinates);
 }
 
-void testSimilarityMatrix(){
+/*tested -> similarityMatrix works*/
+void testSimilarityMatrix()
+{
     int i;
     int j;
-    double** similarityMat;
+    double **similarityMat;
     all_vecs points;
-    points.all_vectors = (vector*)malloc(sizeof(vector)*3);
+    points.all_vectors = (vector *)malloc(sizeof(vector) * 3);
     points.num_vectors = 3;
-    for(i=0;i<3;i++){
+    for (i = 0; i < 3; i++)
+    {
         points.all_vectors[i].dimension = 4;
-        points.all_vectors[i].coordinates = (double*)malloc(sizeof(double)*4);
-        for(j=0;j<4;j++){
-            points.all_vectors[i].coordinates[j] = i+j;
+        points.all_vectors[i].coordinates = (double *)malloc(sizeof(double) * 4);
+        for (j = 0; j < 4; j++)
+        {
+            points.all_vectors[i].coordinates[j] = i + j;
         }
         printVector(&points.all_vectors[i]);
     }
     similarityMat = similarityMatrix(points);
-    printMatrix(similarityMat,3,3);
-    freeMemory(&points,3);
-    freeMatrix(similarityMat,3);
+    printMatrix(similarityMat, 3, 3);
+    freeMemory(&points, 3);
+    freeMatrix(similarityMat, 3);
+}
+
+/*tested -> diagonalDegreeMatrix works*/
+void testDiagonalDegreeMatrix()
+{
+    int i;
+    int j;
+    double **diagonalDegreeMat;
+    all_vecs points;
+    points.all_vectors = (vector *)malloc(sizeof(vector) * 3);
+    points.num_vectors = 3;
+    for (i = 0; i < 3; i++)
+    {
+        points.all_vectors[i].dimension = 4;
+        points.all_vectors[i].coordinates = (double *)malloc(sizeof(double) * 4);
+        for (j = 0; j < 4; j++)
+        {
+            points.all_vectors[i].coordinates[j] = i + j;
+        }
+        printVector(&points.all_vectors[i]);
+    }
+    diagonalDegreeMat = diagonalDegreeMatrix(points);
+    printMatrix(diagonalDegreeMat, 3, 3);
+    freeMemory(&points, 3);
+    freeMatrix(diagonalDegreeMat, 3);
+}
+
+void testNormalizedSimilarityMatrix()
+{
+    int i;
+    int j;
+    double **normalizedMat;
+    all_vecs points;
+    points.all_vectors = (vector *)malloc(sizeof(vector) * 3);
+    points.num_vectors = 3;
+    for (i = 0; i < 3; i++)
+    {
+        points.all_vectors[i].dimension = 4;
+        points.all_vectors[i].coordinates = (double *)malloc(sizeof(double) * 4);
+        for (j = 0; j < 4; j++)
+        {
+            points.all_vectors[i].coordinates[j] = i + j;
+        }
+        printVector(&points.all_vectors[i]);
+    }
+    normalizedMat = normalizedSimilarityMatrix(points);
+    printMatrix(normalizedMat, 3, 3);
+    freeMemory(&points, 3);
+    freeMatrix(normalizedMat, 3);
+}
+/*tested -> transpose works*/
+void testTranspose()
+{
+    double **A = (double **)malloc(sizeof(double *) * 3);
+    double **res;
+    int i;
+    int j;
+    for (i = 0; i < 3; i++)
+    {
+        A[i] = (double *)malloc(sizeof(double) * 4);
+        for (j = 0; j < 4; j++)
+        {
+            A[i][j] = i * j + j;
+        }
+    }
+    printf("Original matrix:\n");
+    printMatrix(A, 3, 4);
+    res = transpose(A, 3, 4);
+    printf("Transposed matrix:\n");
+    printMatrix(res, 4, 3);
+    freeMatrix(res, 4);
+    freeMatrix(A, 3);
+}
+
+void testTrace()
+{
+    double **A = (double **)malloc(sizeof(double *) * 3);
+    double t;
+    int i;
+    int j;
+    for (i = 0; i < 3; i++)
+    {
+        A[i] = (double *)malloc(sizeof(double) * 3);
+        for (j = 0; j < 3; j++)
+        {
+            A[i][j] = i * j + j;
+        }
+    }
+    printf("Original matrix:\n");
+    printMatrix(A, 3, 3);
+    t = trace(A, 3);
+    printf("%f\n", t);
+    freeMatrix(A, 3);
+}
+
+/*tested - substractMatrices works*/
+void testSubstractMatrices()
+{
+    double **A = (double **)malloc(sizeof(double *) * 3);
+    double **B = (double **)malloc(sizeof(double *) * 3);
+    double **res;
+    int i;
+    int j;
+    for (i = 0; i < 3; i++)
+    {
+        A[i] = (double *)malloc(sizeof(double) * 4);
+        for (j = 0; j < 4; j++)
+        {
+            A[i][j] = i * j + j;
+        }
+    }
+    printMatrix(A, 3, 4);
+    for (i = 0; i < 3; i++)
+    {
+        B[i] = (double *)malloc(sizeof(double) * 4);
+        for (j = 0; j < 4; j++)
+        {
+            B[i][j] = 1;
+        }
+    }
+    printMatrix(B, 3, 4);
+    res = substractMatrices(A, B, 3, 4);
+    printMatrix(res, 3, 4);
+    freeMatrix(res, 3);
+    freeMatrix(A, 3);
+    freeMatrix(B, 3);
+}
+
+/*tester -> updateH works, iterateAlgorithm has segmentation fault*/
+void testUpdateH()
+{
+    int i;
+    int j;
+    double **H;
+    double **updatedH;
+    double **W;
+   /* double **result;*/
+    all_vecs points;
+    points.all_vectors = (vector *)malloc(sizeof(vector) * 3);
+    points.num_vectors = 3;
+    printf("Datapoints:\n");
+    for (i = 0; i < 3; i++)
+    {
+        points.all_vectors[i].dimension = 4;
+        points.all_vectors[i].coordinates = (double *)malloc(sizeof(double) * 4);
+        for (j = 0; j < 4; j++)
+        {
+            points.all_vectors[i].coordinates[j] = i + j;
+        }
+        printVector(&points.all_vectors[i]);
+    }
+    W = normalizedSimilarityMatrix(points);
+    printf("W:\n");
+    printMatrix(W,3,3);
+    H = (double**)malloc(sizeof(double*)*3);
+    for(i=0;i<3;i++){
+        H[i] = (double*)malloc(sizeof(double)*2);
+        for(j=0;j<2;j++){
+            H[i][j] = 0.7929;
+        }
+    }
+    printf("H:\n");
+    printMatrix(H,3,2);
+    updatedH = updateH(H,W,3,2);
+    printf("Updated H:\n");
+    printMatrix(updatedH,3,2);
+/*    result = iterateAlgorithm(H,W,3,2);
+    freeMatrix(updatedH,3);
+    printf("Final H:\n");
+    printMatrix(result,3,2);
+    freeMatrix(updatedH,3);*/
+    freeMatrix(H,3);
+    freeMatrix(W,3);
 }

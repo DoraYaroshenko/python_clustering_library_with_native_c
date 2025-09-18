@@ -1,3 +1,4 @@
+#define EPS 0.0001
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,7 +25,7 @@ double **matrixMultiplication(double **a, double **b, int rows1, int rows2, int 
         resMatrix[i] = (double *)calloc(cols2, sizeof(double));
         for (j = 0; j < cols2; j++)
         {
-            int sum = 0;
+            double sum = 0;
             int k;
             for (k = 0; k < rows2; k++)
             {
@@ -58,7 +59,8 @@ void printMatrix(double **matrix, int n, int k)
             printf("%.4f", matrix[i][j]);
             if (j != k - 1)
                 printf(",");
-            else printf("\n");
+            else
+                printf("\n");
         }
     }
 }
@@ -88,18 +90,120 @@ void printVector(vector *vec)
     printf("\n");
 }
 
-void errorHandling()
+double **transpose(double **matrix, int rows, int cols)
 {
-    printf("An Error Has Occured\n");
+    double **transposedMatrix = (double **)malloc(sizeof(double *) * cols);
+    int i;
+    int j;
+    for (i = 0; i < cols; i++)
+    {
+        transposedMatrix[i] = (double *)malloc(sizeof(double) * rows);
+        for (j = 0; j < rows; j++)
+        {
+            transposedMatrix[i][j] = matrix[j][i];
+        }
+    }
+    return transposedMatrix;
 }
 
-all_vecs getInput()
+double trace(double **matrix, int n)
+{
+    double sum = 0;
+    int i;
+    for (i = 0; i < n; i++)
+    {
+        sum += matrix[i][i];
+    }
+    return sum;
+}
+
+double **substractMatrices(double **A, double **B, int rows, int cols)
+{
+    double **result = (double **)malloc(sizeof(double *) * rows);
+    int i;
+    int j;
+    for (i = 0; i < rows; i++)
+    {
+        result[i] = (double *)malloc(sizeof(double) * cols);
+        for (j = 0; j < cols; j++)
+        {
+            result[i][j] = A[i][j] - B[i][j];
+        }
+    }
+    return result;
+}
+
+double **updateH(double **H, double **W, int n, int k)
+{
+    double beta = 0.5;
+    double **updatedH = (double **)malloc(sizeof(double *) * n);
+    double **WH = matrixMultiplication(W, H, n, n, k);
+    double **transposedH = transpose(H, n, k);
+    double **HMulTransposedH = matrixMultiplication(H, transposedH, n, k, n);
+    double **HMulTransposedHMulH = matrixMultiplication(HMulTransposedH, H, n, n, k);
+    int i;
+    int j;
+    for (i = 0; i < n; i++)
+    {
+        updatedH[i] = (double *)malloc(sizeof(double) * k);
+        for (j = 0; j < k; j++)
+        {
+            updatedH[i][j] = H[i][j] * (1 - beta + beta * (WH[i][j] / HMulTransposedHMulH[i][j]));
+        }
+    }
+    freeMatrix(WH, n);
+    freeMatrix(transposedH, k);
+    freeMatrix(HMulTransposedH, n);
+    freeMatrix(HMulTransposedHMulH, n);
+    return updatedH;
+}
+
+double **iterateAlgorithm(double **H, double **W, int n, int k)
+{
+    int max_iter = 300;
+    int i,j,l;
+    double **updatedH, **updatedHMinusH, **prevH, frobeniusNorm;
+    for (i = 0; i < max_iter; i++)
+    {
+        updatedH = updateH(H, W, n, k);
+        updatedHMinusH = substractMatrices(updatedH, H, n, k);
+        frobeniusNorm = 0;
+        for (j = 0; j < n; j++)
+        {
+            for (l = 0; l < k; l++)
+            {
+                frobeniusNorm += pow(fabs(updatedHMinusH[j][l]), 2);
+            }
+        }
+        if (frobeniusNorm < EPS)
+            break;
+        freeMatrix(updatedHMinusH, n);
+        prevH=H;
+        H=updatedH;
+        freeMatrix(prevH, n);
+    }
+    return H;
+}
+
+void errorHandling()
+{
+    printf("An Error Has Occurred\n");
+}
+
+/*tested -> getInput works*/
+all_vecs getInput(char *filename)
 {
     double n;
     char c;
     int i = 0, j = 0;
     all_vecs all_vectors;
     vector curr_vector;
+    FILE *fp = fopen(filename, "r");
+    if (!fp)
+    {
+        errorHandling();
+        exit(1);
+    }
     curr_vector.dimension = 0;
     curr_vector.coordinates = (double *)malloc(sizeof(double));
     if (curr_vector.coordinates == NULL)
@@ -107,7 +211,7 @@ all_vecs getInput()
     all_vectors.all_vectors = (vector *)malloc(sizeof(vector));
     if (all_vectors.all_vectors == NULL)
         errorHandling();
-    while (scanf("%lf%c", &n, &c) == 2)
+    while (fscanf(fp, "%lf%c", &n, &c) == 2)
     {
         if (c == '\n')
         {
@@ -141,6 +245,7 @@ all_vecs getInput()
     }
     free(curr_vector.coordinates);
     all_vectors.num_vectors = i;
+    fclose(fp);
     return all_vectors;
 }
 
@@ -155,8 +260,13 @@ double **similarityMatrix(all_vecs points)
         outputMatrix[i] = (double *)calloc(n, sizeof(double));
         for (j = 0; j < n; j++)
         {
-            double exponent = -pow(distance(points.all_vectors[i], points.all_vectors[j]), 2) / 2;
-            outputMatrix[i][j] = exp(exponent);
+            if (j != i)
+            {
+                double exponent = -pow(distance(points.all_vectors[i], points.all_vectors[j]), 2) / 2;
+                outputMatrix[i][j] = exp(exponent);
+            }
+            else
+                outputMatrix[i][j] = 0;
         }
     }
     return outputMatrix;
@@ -168,7 +278,7 @@ double **diagonalDegreeMatrix(all_vecs points)
     double **similarityMat = similarityMatrix(points);
     int i;
     int j;
-    int rowSum;
+    double rowSum;
     for (i = 0; i < n; i++)
     {
         rowSum = 0;
@@ -204,13 +314,21 @@ double **normalizedSimilarityMatrix(all_vecs points)
 
 /*int main(int argc, char **argv)
 {
-    char *goal = argv[1];
-    all_vecs points = getInput();
-    int n = points.num_vectors;
+    char *goal;
+    int i;
+    char *path;
+    all_vecs points;
+    int n;
     double **outputMatrix;
-    if(argc>3)
-        return(1);
-    char *path = argv[2];
+    if (argc != 3)
+        return (1);
+    goal = argv[1];
+    path = argv[2];
+    points = getInput(path);
+    n = points.num_vectors;
+    for(i=0;i<n;i++){
+        printVector(&points.all_vectors[i]);
+    }
     if (!strcmp(goal, "sym"))
     {
         outputMatrix = similarityMatrix(points);
@@ -225,15 +343,21 @@ double **normalizedSimilarityMatrix(all_vecs points)
     }
     printMatrix(outputMatrix, n, n);
     freeMatrix(outputMatrix, n);
-    freeMemory(&points,n);
-    return(0);
-}
-*/
+    freeMemory(&points, n);
+    return (0);
+}*/
 
-int main()
+ int main()
 {
-    /*testMatrixMultiplication();*/
-    /*testDistance();*/
+   /*testMatrixMultiplication();
+    testDistance();
     testSimilarityMatrix();
+    testDiagonalDegreeMatrix();
+    testNormalizedSimilarityMatrix();
+    testTranspose();
+    testTrace();
+    testSubstractMatrices();
+    */
+    testUpdateH();
     return (0);
 }

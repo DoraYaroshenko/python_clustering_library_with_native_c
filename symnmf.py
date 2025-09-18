@@ -40,32 +40,41 @@ def printmat(A):
 
 def getInputVariables():
     #it has to be exactly 4 args - I hope we still need to check that? because apparently there is no need to check the arguments themselves in this assignment?
-    if len(sys.argv) != 4:
-        print("An Error Has Occurred")
-        sys.exit(1)
+    # if len(sys.argv) != 4:
+    #     print("An Error Has Occurred")
+    #     sys.exit(1)
 
-    K = float(sys.argv[1])
+    K = int(sys.argv[1])
     goal = sys.argv[2]
     file_name = sys.argv[3]
     return K, goal, file_name
 
 def getDataPoints(file_name):
     vectors = pd.read_csv(file_name, header=None)
-    vectors.columns = [f"coordinate {i}" for i in range(df.shape[1])]
+    vectors.columns = [f"coordinate {i}" for i in range(vectors.shape[1])]
     vectors.index.name = "key"
     return vectors
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     K, goal, file_name = getInputVariables() #ok
     vectors = getDataPoints(file_name) #ok
+    print(vectors)
     N = len(vectors) #ok
     points_array=vectors.to_numpy() # okay, returns actual matrix in numpy form..
 
     if goal == "symnmf":
         A = symnmf.sym(points_array) # maybe should use sym method from c file instead.
-        D = symnmf.ddg(A) # maybe should use ddg method from c file instead
-        W = symnmf.norm(D, A) # should have used norm from c file instead apparently
+        print("\nSimilarity matrix A:\n")
+        printmat(A)
+        D = symnmf.ddg(points_array)
+        print("\nDiagonal matrix D:\n")
+        printmat(D) # maybe should use ddg method from c file instead
+        W = symnmf.norm(points_array)
+        print("\nNormalized matrix W:\n")
+        printmat(W) # should have used norm from c file instead apparently
+        print("\nH:\n")
         H = init_H(W, K)
+        printmat(H)
         H = symnmf.symnmf(H, W)
         printmat(H)
     elif goal == "sym":

@@ -21,7 +21,18 @@ all_vecs getInput();
 double **similarityMatrix(all_vecs points);
 double **diagonalDegreeMatrix(all_vecs points);
 double **normalizedSimilarityMatrix(all_vecs points);
+double **transpose(double **matrix, int rows, int cols);
+double trace(double **matrix, int n);
+double **substractMatrices(double **A, double **B, int rows, int cols);
+double **updateH(double **H, double **W, int n, int k);
+double **iterateAlgorithm(double **H, double **W, int n, int k);
 
 void testMatrixMultiplication();
 void testDistance();
 void testSimilarityMatrix();
+void testDiagonalDegreeMatrix();
+void testNormalizedSimilarityMatrix();
+void testTranspose();
+void testTrace();
+void testSubstractMatrices();
+void testUpdateH();
