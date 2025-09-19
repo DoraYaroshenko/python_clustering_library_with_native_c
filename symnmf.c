@@ -5,33 +5,85 @@
 #include <math.h>
 #include "symnmf.h"
 
-void freeMatrix(double **matrix, int rows)
+vector createVector(int dim)
 {
-    int i;
-    for (i = 0; i < rows; i++)
-    {
-        free(matrix[i]);
-    }
-    free(matrix);
+    vector newVec;
+    newVec.dimension = dim;
+    newVec.coordinates = (double *)malloc(sizeof(double) * newVec.dimension);
+    return newVec;
 }
 
-double **matrixMultiplication(double **a, double **b, int rows1, int rows2, int cols2)
+void freeVector(vector vec)
 {
-    double **resMatrix = (double **)calloc(rows1, sizeof(double *));
+    int i;
+    free(vec.coordinates);
+}
+
+matrix createMatrix(int rows, int cols)
+{
+    int i;
+    matrix newMatrix;
+    newMatrix.numOfRows = rows;
+    newMatrix.numOfCols = cols;
+    newMatrix.matrixEntries = (double **)malloc(sizeof(double *) * newMatrix.numOfRows);
+    for (i = 0; i < newMatrix.numOfRows; i++)
+    {
+        newMatrix.matrixEntries[i] = (double *)malloc(sizeof(double) * newMatrix.numOfCols);
+    }
+    return newMatrix;
+}
+
+void freeMatrix(matrix mat)
+{
+    int i;
+    for (i = 0; i < mat.numOfRows; i++)
+    {
+        free(mat.matrixEntries[i]);
+    }
+    free(mat.matrixEntries);
+}
+
+dataPoints createDataPoints(int numOfVectors, int dim)
+{
+    int i;
+    dataPoints allVectors;
+    allVectors.num_vectors = numOfVectors;
+    allVectors.all_vectors = (vector *)malloc(sizeof(vector) * numOfVectors);
+    for (i = 0; i < allVectors.num_vectors; i++)
+    {
+        allVectors.all_vectors[i] = createVector(dim);
+    }
+    return allVectors;
+}
+
+void freeDataPoints(dataPoints all_vectors)
+{
+    int i;
+    for (i = 0; i < all_vectors.num_vectors; i++)
+    {
+        freeVector(all_vectors.all_vectors[i]);
+    }
+    free(all_vectors.all_vectors);
+}
+
+matrix matrixMultiplication(matrix a, matrix b)
+{
+    if (a.numOfCols != b.numOfRows)
+        errorHandling();
+    matrix resMatrix = createMatrix(a.numOfRows, b.numOfCols);
     int i;
     int j;
-    for (i = 0; i < rows1; i++)
+    double sum = 0;
+    int k;
+    for (i = 0; i < a.numOfRows; i++)
     {
-        resMatrix[i] = (double *)calloc(cols2, sizeof(double));
-        for (j = 0; j < cols2; j++)
+        for (j = 0; j < b.numOfCols; j++)
         {
-            double sum = 0;
-            int k;
-            for (k = 0; k < rows2; k++)
+            for (k = 0; k < b.numOfRows; k++)
             {
-                sum += a[i][k] * b[k][j];
+                sum += a.matrixEntries[i][k] * b.matrixEntries[k][j];
             }
-            resMatrix[i][j] = sum;
+            resMatrix.matrixEntries[i][j] = sum;
         }
     }
     return resMatrix;
@@ -48,16 +100,16 @@ double distance(vector v1, vector v2)
     return sqrt(sum);
 }
 
-void printMatrix(double **matrix, int n, int k)
+void printMatrix(matrix mat)
 {
     int i;
     int j;
-    for (i = 0; i < n; i++)
+    for (i = 0; i < mat.numOfRows; i++)
     {
-        for (j = 0; j < k; j++)
+        for (j = 0; j < mat.numOfCols; j++)
         {
-            printf("%.4f", matrix[i][j]);
-            if (j != k - 1)
+            printf("%.4f", mat.matrixEntries[i][j]);
+            if (j != mat.numOfCols - 1)
                 printf(",");
             else
                 printf("\n");
@@ -65,122 +117,114 @@ void printMatrix(double **matrix, int n, int k)
     }
 }
 
-void freeMemory(all_vecs *all_vectors, int N)
+void printVector(vector vec)
 {
     int i;
-    for (i = 0; i < N; i++)
+    for (i = 0; i < vec.dimension; i++)
     {
-        free(all_vectors->all_vectors[i].coordinates);
-    }
-    free(all_vectors->all_vectors);
-}
-
-void printVector(vector *vec)
-{
-    int i;
-    for (i = 0; i < vec->dimension; i++)
-    {
-        if (i == vec->dimension - 1)
+        if (i == vec.dimension - 1)
         {
-            printf("%.4f", (vec->coordinates)[i]);
+            printf("%.4f", (vec.coordinates)[i]);
         }
         else
-            printf("%.4f,", (vec->coordinates)[i]);
+            printf("%.4f,", (vec.coordinates)[i]);
     }
     printf("\n");
 }
 
-double **transpose(double **matrix, int rows, int cols)
+matrix transpose(matrix mat)
 {
-    double **transposedMatrix = (double **)malloc(sizeof(double *) * cols);
+    matrix transposedMatrix = createMatrix(mat.numOfCols, mat.numOfRows);
     int i;
     int j;
-    for (i = 0; i < cols; i++)
+    for (i = 0; i < mat.numOfCols; i++)
     {
-        transposedMatrix[i] = (double *)malloc(sizeof(double) * rows);
-        for (j = 0; j < rows; j++)
+        for (j = 0; j < mat.numOfRows; j++)
         {
-            transposedMatrix[i][j] = matrix[j][i];
+            transposedMatrix.matrixEntries[i][j] = mat.matrixEntries[j][i];
         }
     }
     return transposedMatrix;
 }
 
-double trace(double **matrix, int n)
+double trace(matrix mat)
 {
     double sum = 0;
     int i;
-    for (i = 0; i < n; i++)
+    for (i = 0; i < mat.numOfRows; i++)
     {
-        sum += matrix[i][i];
+        sum += mat.matrixEntries[i][i];
     }
     return sum;
 }
 
-double **substractMatrices(double **A, double **B, int rows, int cols)
+matrix substractMatrices(matrix A, matrix B)
 {
-    double **result = (double **)malloc(sizeof(double *) * rows);
+    if (A.numOfRows != B.numOfRows || A.numOfCols != B.numOfCols)
+        errorHandling();
+    matrix result = createMatrix(A.numOfRows, A.numOfCols);
     int i;
     int j;
-    for (i = 0; i < rows; i++)
+    for (i = 0; i < A.numOfRows; i++)
     {
-        result[i] = (double *)malloc(sizeof(double) * cols);
-        for (j = 0; j < cols; j++)
+        for (j = 0; j < A.numOfCols; j++)
         {
-            result[i][j] = A[i][j] - B[i][j];
+            result.matrixEntries[i][j] = A.matrixEntries[i][j] - B.matrixEntries[i][j];
         }
     }
     return result;
 }
 
-double **updateH(double **H, double **W, int n, int k)
+matrix updateH(matrix H, matrix W)
 {
+    if (H.numOfRows != W.numOfRows)
+        errorHandling();
     double beta = 0.5;
-    double **updatedH = (double **)malloc(sizeof(double *) * n);
-    double **WH = matrixMultiplication(W, H, n, n, k);
-    double **transposedH = transpose(H, n, k);
-    double **HMulTransposedH = matrixMultiplication(H, transposedH, n, k, n);
-    double **HMulTransposedHMulH = matrixMultiplication(HMulTransposedH, H, n, n, k);
+    matrix updatedH = createMatrix(H.numOfRows, H.numOfCols);
+    matrix WH = matrixMultiplication(W, H);
+    matrix transposedH = transpose(H);
+    matrix HMulTransposedH = matrixMultiplication(H, transposedH);
+    matrix HMulTransposedHMulH = matrixMultiplication(HMulTransposedH, H);
     int i;
     int j;
-    for (i = 0; i < n; i++)
+    for (i = 0; i < H.numOfRows; i++)
     {
-        updatedH[i] = (double *)malloc(sizeof(double) * k);
-        for (j = 0; j < k; j++)
+        for (j = 0; j < H.numOfCols; j++)
         {
-            updatedH[i][j] = H[i][j] * (1 - beta + beta * (WH[i][j] / HMulTransposedHMulH[i][j]));
+            updatedH.matrixEntries[i][j] = H.matrixEntries[i][j] * (1 - beta + beta * (WH.matrixEntries[i][j] / HMulTransposedHMulH.matrixEntries[i][j]));
         }
     }
-    freeMatrix(WH, n);
-    freeMatrix(transposedH, k);
-    freeMatrix(HMulTransposedH, n);
-    freeMatrix(HMulTransposedHMulH, n);
+    freeMatrix(WH);
+    freeMatrix(transposedH);
+    freeMatrix(HMulTransposedH);
+    freeMatrix(HMulTransposedHMulH);
     return updatedH;
 }
 
-double **iterateAlgorithm(double **H, double **W, int n, int k)
+matrix iterateAlgorithm(matrix H, matrix W)
 {
     int max_iter = 300;
-    int i,j,l;
-    double **updatedH, **updatedHMinusH, **prevH, frobeniusNorm;
+    int i, j, l;
+    matrix updatedH, updatedHMinusH, prevH;
+    double frobeniusNorm;
     for (i = 0; i < max_iter; i++)
     {
-        updatedH = updateH(H, W, n, k);
-        updatedHMinusH = substractMatrices(updatedH, H, n, k);
+        updatedH = updateH(H, W);
+        updatedHMinusH = substractMatrices(updatedH, H);
         frobeniusNorm = 0;
-        for (j = 0; j < n; j++)
+        for (j = 0; j < H.numOfRows; j++)
         {
-            for (l = 0; l < k; l++)
+            for (l = 0; l < H.numOfCols; l++)
             {
-                frobeniusNorm += pow(fabs(updatedHMinusH[j][l]), 2);
+                frobeniusNorm += pow(fabs(updatedHMinusH.matrixEntries[j][l]), 2);
             }
         }
         if (frobeniusNorm < EPS)
             break;
-        freeMatrix(updatedHMinusH, n);
-        prevH=H;
-        H=updatedH;
-        freeMatrix(prevH, n);
+        freeMatrix(updatedHMinusH);
+        prevH = H;
+        H = updatedH;
+        freeMatrix(prevH);
     }
     return H;
 }
@@ -190,125 +234,135 @@ void errorHandling()
     printf("An Error Has Occurred\n");
 }
 
-/*tested -> getInput works*/
-all_vecs getInput(char *filename)
+int calculateNumOfPoints(char *filename)
 {
-    double n;
+    int numOfPoints;
+    double coordinate;
     char c;
-    int i = 0, j = 0;
-    all_vecs all_vectors;
-    vector curr_vector;
     FILE *fp = fopen(filename, "r");
     if (!fp)
     {
         errorHandling();
         exit(1);
     }
-    curr_vector.dimension = 0;
-    curr_vector.coordinates = (double *)malloc(sizeof(double));
-    if (curr_vector.coordinates == NULL)
-        errorHandling();
-    all_vectors.all_vectors = (vector *)malloc(sizeof(vector));
-    if (all_vectors.all_vectors == NULL)
-        errorHandling();
-    while (fscanf(fp, "%lf%c", &n, &c) == 2)
+    while (fscanf(fp, "%lf%c", &numOfPoints, &c) == 2)
     {
         if (c == '\n')
-        {
-            vector new_vector;
-            curr_vector.coordinates[j] = n;
-            j++;
-            if (i == 0)
-                curr_vector.dimension++;
-            all_vectors.all_vectors[i] = curr_vector;
-            i++;
-            all_vectors.all_vectors = (vector *)realloc(all_vectors.all_vectors, sizeof(vector) * (i + 1));
-            if (all_vectors.all_vectors == NULL)
-                errorHandling();
-            new_vector.dimension = j;
-            new_vector.coordinates = (double *)malloc(sizeof(double) * new_vector.dimension);
-            if (new_vector.coordinates == NULL)
-                errorHandling();
-            curr_vector = new_vector;
-            j = 0;
-            continue;
-        }
-        curr_vector.coordinates[j] = n;
-        j++;
-        if (i == 0)
-        {
-            curr_vector.dimension++;
-            curr_vector.coordinates = (double *)realloc(curr_vector.coordinates, sizeof(double) * (j + 1));
-            if (curr_vector.coordinates == NULL)
-                errorHandling();
-        }
+            numOfPoints++;
     }
-    free(curr_vector.coordinates);
-    all_vectors.num_vectors = i;
     fclose(fp);
-    return all_vectors;
+    return numOfPoints;
 }
 
-double **similarityMatrix(all_vecs points)
+int calculateDimension(char *filename){
+    int dimension;
+    FILE *fp = fopen(filename, "r");
+    int n;
+    char c;
+    if (!fp)
+    {
+        errorHandling();
+        exit(1);
+    }
+    while (fscanf(fp, "%lf%c", &n, &c) == 2)
+    {
+        dimension++;
+        if (c == '\n')
+            break;
+    }
+    fclose(fp);
+    return dimension;
+}
+
+/*tested -> getInput works*/
+dataPoints getInput(char *filename)
+{
+    double coordinate;
+    char c;
+    int numOfPoints = calculateNumOfPoints(filename);
+    int dimension = calculateDimension(filename);
+    int i=0,j=0;
+    dataPoints points = createDataPoints(numOfPoints,dimension);
+    FILE *fp = fopen(filename, "r");
+    if (!fp)
+    {
+        errorHandling();
+        exit(1);
+    }
+    while (fscanf(fp, "%lf%c", &coordinate, &c) == 2)
+    {
+        points.all_vectors[i].coordinates[j] = coordinate;
+        j++;
+        if (c == '\n')
+        {
+            i++;
+            j=0;
+        }
+    }
+    fclose(fp);
+    return points;
+}
+
+matrix similarityMatrix(dataPoints points)
 {
     int n = points.num_vectors;
-    double **outputMatrix = (double **)calloc(n, sizeof(double *));
+    matrix outputMatrix = createMatrix(n, n);
     int i;
     int j;
     for (i = 0; i < n; i++)
     {
-        outputMatrix[i] = (double *)calloc(n, sizeof(double));
         for (j = 0; j < n; j++)
         {
             if (j != i)
             {
                 double exponent = -pow(distance(points.all_vectors[i], points.all_vectors[j]), 2) / 2;
-                outputMatrix[i][j] = exp(exponent);
+                outputMatrix.matrixEntries[i][j] = exp(exponent);
             }
             else
-                outputMatrix[i][j] = 0;
+                outputMatrix.matrixEntries[i][j] = 0;
         }
     }
     return outputMatrix;
 }
-double **diagonalDegreeMatrix(all_vecs points)
+
+matrix diagonalDegreeMatrix(dataPoints points)
 {
     int n = points.num_vectors;
-    double **outputMatrix = (double **)calloc(n, sizeof(double *));
-    double **similarityMat = similarityMatrix(points);
+    matrix outputMatrix = createMatrix(n, n);
+    matrix similarityMat = similarityMatrix(points);
     int i;
     int j;
     double rowSum;
     for (i = 0; i < n; i++)
     {
         rowSum = 0;
-        outputMatrix[i] = (double *)calloc(n, sizeof(double));
         for (j = 0; j < n; j++)
         {
-            rowSum += similarityMat[i][j];
+            rowSum += similarityMat.matrixEntries[i][j];
         }
-        outputMatrix[i][i] = rowSum;
+        outputMatrix.matrixEntries[i][i] = rowSum;
     }
-    freeMatrix(similarityMat, n);
+    freeMatrix(similarityMat);
     return outputMatrix;
 }
-double **normalizedSimilarityMatrix(all_vecs points)
+
+matrix normalizedSimilarityMatrix(dataPoints points)
 {
     int n = points.num_vectors;
-    double **similarityMat = similarityMatrix(points);
-    double **degreeMat = diagonalDegreeMatrix(points);
+    matrix similarityMat = similarityMatrix(points);
+    matrix degreeMat = diagonalDegreeMatrix(points);
     int i;
-    double **mulMat;
-    double **resMatrix;
+    matrix mulMat;
+    matrix resMatrix;
     for (i = 0; i < n; i++)
     {
-        degreeMat[i][i] = 1 / sqrt(degreeMat[i][i]);
+        degreeMat.matrixEntries[i][i] = 1 / sqrt(degreeMat.matrixEntries[i][i]);
     }
-    mulMat = matrixMultiplication(degreeMat, similarityMat, n, n, n);
-    resMatrix = matrixMultiplication(mulMat, degreeMat, n, n, n);
-    freeMatrix(mulMat, n);
-    freeMatrix(similarityMat, n);
-    freeMatrix(degreeMat, n);
+    mulMat = matrixMultiplication(degreeMat, similarityMat);
+    resMatrix = matrixMultiplication(mulMat, degreeMat);
+    freeMatrix(mulMat);
+    freeMatrix(similarityMat);
+    freeMatrix(degreeMat);
     return resMatrix;
 }
 
@@ -317,9 +371,9 @@ double **normalizedSimilarityMatrix(all_vecs points)
     char *goal;
     int i;
     char *path;
-    all_vecs points;
+    dataPoints points;
     int n;
-    double **outputMatrix;
+    matrix *outputMatrix;
     if (argc != 3)
         return (1);
     goal = argv[1];
@@ -347,17 +401,17 @@ double **normalizedSimilarityMatrix(all_vecs points)
     return (0);
 }*/
 
- int main()
+int main()
 {
-   /*testMatrixMultiplication();
-    testDistance();
-    testSimilarityMatrix();
-    testDiagonalDegreeMatrix();
-    testNormalizedSimilarityMatrix();
-    testTranspose();
-    testTrace();
-    testSubstractMatrices();
-    */
+    /*testMatrixMultiplication();
+     testDistance();
+     testSimilarityMatrix();
+     testDiagonalDegreeMatrix();
+     testNormalizedSimilarityMatrix();
+     testTranspose();
+     testTrace();
+     testSubstractMatrices();
+     */
     testUpdateH();
     return (0);
 }

@@ -8,24 +8,37 @@ typedef struct
 {
     vector *all_vectors;
     int num_vectors;
-} all_vecs;
+} dataPoints;
 
-void freeMatrix(double** matrix,int n);
-double **matrixMultiplication(double **a, double **b, int rows1, int rows2, int cols2);
+typedef struct
+{
+    double **matrixEntries;
+    int numOfRows;
+    int numOfCols;
+} matrix;
+
+vector createVector(int dim);
+void freeVector(vector vec);
+dataPoints createDataPoints(int n, int d);
+void freeDataPoints(dataPoints all_vectors);
+matrix createMatrix(int rows, int cols);
+void freeMatrix(matrix mat);
+matrix matrixMultiplication(matrix a, matrix b);
 double distance(vector v1, vector v2);
-void printMatrix(double** matrix, int n, int k);
-void freeMemory(all_vecs *all_vectors, int N);
-void printVector(vector *vec);
+void printMatrix(matrix mat);
+void printVector(vector vec);
 void errorHandling();
-all_vecs getInput();
-double **similarityMatrix(all_vecs points);
-double **diagonalDegreeMatrix(all_vecs points);
-double **normalizedSimilarityMatrix(all_vecs points);
-double **transpose(double **matrix, int rows, int cols);
-double trace(double **matrix, int n);
-double **substractMatrices(double **A, double **B, int rows, int cols);
-double **updateH(double **H, double **W, int n, int k);
-double **iterateAlgorithm(double **H, double **W, int n, int k);
+dataPoints getInput();
+matrix similarityMatrix(dataPoints points);
+matrix diagonalDegreeMatrix(dataPoints points);
+matrix normalizedSimilarityMatrix(dataPoints points);
+matrix transpose(matrix mat);
+double trace(matrix mat);
+matrix substractMatrices(matrix a, matrix b);
+matrix updateH(matrix H, matrix W);
+matrix iterateAlgorithm(matrix H, matrix W);
+int calculateNumOfPoints(char *filename);
+int calculateDimension(char *filename);
 
 void testMatrixMultiplication();
 void testDistance();

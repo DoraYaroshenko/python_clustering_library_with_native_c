@@ -7,56 +7,51 @@
 /*checked and workes -> printMatrix works, matrixMultiplication works*/
 void testMatrixMultiplication()
 {
-    double **A = (double **)malloc(sizeof(double *) * 3);
-    double **B = (double **)malloc(sizeof(double *) * 3);
-    double **res;
+    printf("Testing matrix multiplication and printMatrix");
+    matrix A = createMatrix(3,4);
+    matrix B = createMatrix(4,3);
+    matrix res;
     int i;
     int j;
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < A.numOfRows; i++)
     {
-        A[i] = (double *)malloc(sizeof(double) * 3);
-        for (j = 0; j < 3; j++)
+        for (j = 0; j < A.numOfCols; j++)
         {
-            A[i][j] = i * j + j;
+            A.matrixEntries[i][j] = i * j + j;
         }
     }
-    printMatrix(A, 3, 3);
-    for (i = 0; i < 3; i++)
+    printMatrix(A);
+    for (i = 0; i < B.numOfRows; i++)
     {
-        B[i] = (double *)malloc(sizeof(double) * 3);
-        for (j = 0; j < 3; j++)
+        for (j = 0; j < B.numOfCols; j++)
         {
-            B[i][j] = 1;
+            B.matrixEntries[i][j] = 1;
         }
     }
-    printMatrix(B, 3, 3);
-    res = matrixMultiplication(A, B, 3, 3, 3);
-    printMatrix(res, 3, 3);
-    freeMatrix(A, 3);
-    freeMatrix(B, 3);
-    freeMatrix(res, 3);
+    printMatrix(B);
+    res = matrixMultiplication(A, B);
+    printMatrix(res);
+    freeMatrix(A);
+    freeMatrix(B);
+    freeMatrix(res);
 }
 
 /*checked and works -> distance works and print vector works*/
 void testDistance()
 {
-    vector a;
-    vector b;
+    vector a = createVector(3);
+    vector b = createVector(3);
     int i;
-    a.coordinates = (double *)malloc(sizeof(double) * 3);
-    b.coordinates = (double *)malloc(sizeof(double) * 3);
-    a.dimension = 3;
-    b.dimension = 3;
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < a.dimension; i++)
     {
         a.coordinates[i] = i;
         b.coordinates[i] = 2 * i;
     }
-    printVector(&a);
-    printVector(&b);
+    printVector(a);
+    printVector(b);
     printf("%f", distance(a, b));
-    free(a.coordinates);
-    free(b.coordinates);
+    freeVector(a);
+    freeVector(b);
 }
 
 /*tested -> similarityMatrix works*/
@@ -64,24 +59,20 @@ void testSimilarityMatrix()
 {
     int i;
     int j;
-    double **similarityMat;
-    all_vecs points;
-    points.all_vectors = (vector *)malloc(sizeof(vector) * 3);
-    points.num_vectors = 3;
-    for (i = 0; i < 3; i++)
+    matrix similarityMat;
+    dataPoints points = createDataPoints(3,4);
+    for (i = 0; i < points.num_vectors; i++)
     {
-        points.all_vectors[i].dimension = 4;
-        points.all_vectors[i].coordinates = (double *)malloc(sizeof(double) * 4);
         for (j = 0; j < 4; j++)
         {
             points.all_vectors[i].coordinates[j] = i + j;
         }
-        printVector(&points.all_vectors[i]);
+        printVector(points.all_vectors[i]);
     }
     similarityMat = similarityMatrix(points);
-    printMatrix(similarityMat, 3, 3);
-    freeMemory(&points, 3);
-    freeMatrix(similarityMat, 3);
+    printMatrix(similarityMat);
+    freeMemory(points);
+    freeMatrix(similarityMat);
 }
 
 /*tested -> diagonalDegreeMatrix works*/
@@ -89,24 +80,19 @@ void testDiagonalDegreeMatrix()
 {
     int i;
     int j;
-    double **diagonalDegreeMat;
-    all_vecs points;
-    points.all_vectors = (vector *)malloc(sizeof(vector) * 3);
-    points.num_vectors = 3;
+    matrix diagonalDegreeMat;
+    dataPoints points = createDataPoints(3,4);
     for (i = 0; i < 3; i++)
     {
-        points.all_vectors[i].dimension = 4;
-        points.all_vectors[i].coordinates = (double *)malloc(sizeof(double) * 4);
         for (j = 0; j < 4; j++)
         {
             points.all_vectors[i].coordinates[j] = i + j;
         }
-        printVector(&points.all_vectors[i]);
+        printVector(points.all_vectors[i]);
     }
     diagonalDegreeMat = diagonalDegreeMatrix(points);
-    printMatrix(diagonalDegreeMat, 3, 3);
-    freeMemory(&points, 3);
-    freeMatrix(diagonalDegreeMat, 3);
+    printMatrix(diagonalDegreeMat);
+    freeMatrix(diagonalDegreeMat);
 }
 
 void testNormalizedSimilarityMatrix()
@@ -218,7 +204,7 @@ void testUpdateH()
     double **H;
     double **updatedH;
     double **W;
-   /* double **result;*/
+    double **result;
     all_vecs points;
     points.all_vectors = (vector *)malloc(sizeof(vector) * 3);
     points.num_vectors = 3;
@@ -248,11 +234,11 @@ void testUpdateH()
     updatedH = updateH(H,W,3,2);
     printf("Updated H:\n");
     printMatrix(updatedH,3,2);
-/*    result = iterateAlgorithm(H,W,3,2);
+    result = iterateAlgorithm(H,W,3,2);
     freeMatrix(updatedH,3);
     printf("Final H:\n");
     printMatrix(result,3,2);
-    freeMatrix(updatedH,3);*/
+    freeMatrix(updatedH,3);
     freeMatrix(H,3);
     freeMatrix(W,3);
 }
