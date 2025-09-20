@@ -2,7 +2,7 @@ import math
 import sys
 import numpy as np
 import pandas as pd
-import symnmf
+import _symnmf
 
 np.random.seed(1234)
 
@@ -63,26 +63,26 @@ if __name__ == "__main__":
     points_array=vectors.to_numpy() # okay, returns actual matrix in numpy form..
 
     if goal == "symnmf":
-        A = symnmf.sym(points_array) # maybe should use sym method from c file instead.
+        A = _symnmf.sym(points_array) # maybe should use sym method from c file instead.
         print("\nSimilarity matrix A:\n")
         printmat(A)
-        D = symnmf.ddg(points_array)
+        D = _symnmf.ddg(points_array)
         print("\nDiagonal matrix D:\n")
         printmat(D) # maybe should use ddg method from c file instead
-        W = symnmf.norm(points_array)
+        W = _symnmf.norm(points_array)
         print("\nNormalized matrix W:\n")
         printmat(W) # should have used norm from c file instead apparently
         print("\nH:\n")
         H = init_H(W, K)
         printmat(H)
-        H = symnmf.symnmf(H, W)
+        H = _symnmf.symnmf(H, W)
         printmat(H)
     elif goal == "sym":
-        A = symnmf.sym(points_array)
+        A = _symnmf.sym(points_array)
         printmat(A)
     elif goal == "ddg":
-        D = symnmf.ddg(points_array)
+        D = _symnmf.ddg(points_array)
         printmat(D)
     else: # goal == "norm"
-        W = symnmf.norm(points_array)
+        W = _symnmf.norm(points_array)
         printmat(W)

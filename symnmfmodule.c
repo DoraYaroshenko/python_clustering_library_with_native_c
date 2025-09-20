@@ -2,74 +2,61 @@
 #include <Python.h>
 #include "symnmf.h"
 
-all_vecs *parseDataPoints(PyObject *points)
+dataPoints parseDataPoints(PyObject *points)
 {
-    all_vecs *all_vectors = (all_vecs*)malloc(sizeof(all_vecs));
-    int N = PyList_Size(points);
-    if (N == 0)
-        return NULL;
-    PyObject *first_point = PyList_GetItem(points, 0);
-    if (!PyList_Check(first_point))
-        return NULL;
-    int dim = PyList_Size(first_point);
-
-    all_vectors->num_vectors = N;
-    all_vectors->all_vectors = (vector *)malloc(sizeof(vector) * N);
-    if (all_vectors->all_vectors == NULL)
-        return NULL;
-    for (int i = 0; i < N; i++)
+    int N = PySequence_Size(points);
+    PyObject *first_point = PySequence_GetItem(points, 0);
+    // if (!PySequence_Check(first_point))
+    //     return NULL
+    int dim = PySequence_Size(first_point);
+    dataPoints all_vectors = createDataPoints(N,dim);
+    for (int i = 0; i < all_vectors.num_vectors; i++)
     {
-        PyObject *point = PyList_GetItem(points, i);
-        if (!PyList_Check(point) || PyList_Size(point) != dim)
-            return NULL;
-        all_vectors->all_vectors[i].dimension = dim;
-        all_vectors->all_vectors[i].coordinates = (double *)malloc(sizeof(double) * dim);
-        if (all_vectors->all_vectors[i].coordinates == NULL)
-            return NULL;
+        PyObject *point = PySequence_GetItem(points, i);
+        // if (!PySequence_Check(point) || PySequence_Size(point) != dim)
+        //     return NULL;
         for (int j = 0; j < dim; j++)
         {
-            PyObject *coord = PyList_GetItem(point, j);
-            if (!PyFloat_Check(coord))
-                return NULL;
-            all_vectors->all_vectors[i].coordinates[j] = PyFloat_AsDouble(coord);
+            PyObject *coord = PySequence_GetItem(point, j);
+            // if (!PyFloat_Check(coord))
+            //     return NULL;
+            all_vectors.all_vectors[i].coordinates[j] = PyFloat_AsDouble(coord);
         }
     }
     return all_vectors;
 }
 
-double **parseMatrix(PyObject *matrix)
+matrix parseMatrix(PyObject *mat)
 {
-    int n = PyList_Size(matrix);
-    double **parsedMatrix = (double **)malloc(sizeof(double *) * n);
-    if (parsedMatrix == NULL)
-        return NULL;
+    int n = PySequence_Size(mat);
+    PyObject *row = PySequence_GetItem(mat, 0);
+    // if (!PySequence_Check(row))
+    //     return NULL;
+    int dim = PySequence_Size(row);
+    matrix parsedMatrix = createMatrix(n,dim);
     for (int i = 0; i < n; i++)
     {
-        PyObject *row = PyList_GetItem(matrix, i);
-        if (!PyList_Check(row))
-            return NULL;
-        int k = PyList_Size(row);
-        parsedMatrix[i] = (double *)malloc(sizeof(double) * k);
-        for (int j = 0; j < k; j++)
+        row = PySequence_GetItem(mat, i);
+        for (int j = 0; j < dim; j++)
         {
-            PyObject *entry = PyList_GetItem(row, j);
-            if (!PyFloat_Check(entry))
-                return NULL;
-            parsedMatrix[i][j] = PyFloat_AsDouble(entry);
+            PyObject *entry = PySequence_GetItem(row, j);
+            // if (!PyFloat_Check(entry))
+            //     return NULL;
+            parsedMatrix.matrixEntries[i][j] = PyFloat_AsDouble(entry);
         }
     }
     return parsedMatrix;
 }
 
-PyObject *parseResultMatrix(double **matrix, int n, int k)
+PyObject *parseResultMatrix(matrix mat)
 {
-    PyObject *resultMat = PyList_New(n);
-    for (int i = 0; i < n; i++)
+    PyObject *resultMat = PyList_New(mat.numOfRows);
+    for (int i = 0; i < mat.numOfRows; i++)
     {
-        PyObject *row = PyList_New(k);
-        for (int j = 0; j < k; j++)
+        PyObject *row = PyList_New(mat.numOfCols);
+        for (int j = 0; j < mat.numOfCols; j++)
         {
-            PyList_SetItem(row, j, PyFloat_FromDouble(matrix[i][j]));
+            PyList_SetItem(row, j, PyFloat_FromDouble(mat.matrixEntries[i][j]));
         }
         PyList_SetItem(resultMat, i, row);
     }
@@ -82,17 +69,12 @@ static PyObject *symnmf(PyObject *self, PyObject *args)
     PyObject *W;
     if (!PyArg_ParseTuple(args, "OO", &H, &W))
         return NULL;
-    if (!PyList_Check(H) || !PyList_Check(W))
-        return NULL;
-    double **parsedH = parseMatrix(H);
-    double **parsedW = parseMatrix(W);
-    int rowsH = PyList_Size(H);
-    int colsH = PyList_Size(PyList_GetItem(H, 0));
-    /*int rowsW = PyList_Size(W);
-    int colsW = PyList_Size(PyList_GetItem(W, 0));
-    */
-    double** result = iterateAlgorithm(parsedH, parsedW, rowsH, colsH);
-    return parseResultMatrix(result, rowsH, colsH);
+    // if (!PySequence_Check(H) || !PySequence_Check(W))
+    //     return NULL;
+    matrix parsedH = parseMatrix(H);
+    matrix parsedW = parseMatrix(W);
+    matrix result = iterateAlgorithm(parsedH, parsedW);
+    return parseResultMatrix(result);
 }
 
 static PyObject *sym(PyObject *self, PyObject *args)
@@ -100,14 +82,14 @@ static PyObject *sym(PyObject *self, PyObject *args)
     PyObject *points;
     if (!PyArg_ParseTuple(args, "O", &points))
         return NULL;
-    // if (!PyList_Check(points))
+    // if (!PySequence_Check(points))
     //     return NULL;
-    all_vecs *dataPoints = parseDataPoints(points);
-    int n = dataPoints->num_vectors;
-    double **similarityMat = similarityMatrix(*dataPoints);
-    PyObject *result = parseResultMatrix(similarityMat, n, n);
-    freeMatrix(similarityMat, n);
-    freeMemory(dataPoints, n);
+    dataPoints vectors = parseDataPoints(points);
+    printDataPoints(vectors);
+    matrix similarityMat = similarityMatrix(vectors);
+    PyObject *result = parseResultMatrix(similarityMat);
+    freeMatrix(similarityMat);
+    freeDataPoints(vectors);
     return result;
 }
 
@@ -116,14 +98,13 @@ static PyObject *ddg(PyObject *self, PyObject *args)
     PyObject *points;
     if (!PyArg_ParseTuple(args, "O", &points))
         return NULL;
-    // if (!PyList_Check(points))
+    // if (!PySequence_Check(points))
     //     return NULL;
-    all_vecs *dataPoints = parseDataPoints(points);
-    int n = dataPoints->num_vectors;
-    double **diagonalDegreeMat = diagonalDegreeMatrix(*dataPoints);
-    PyObject *result = parseResultMatrix(diagonalDegreeMat, n, n);
-    freeMatrix(diagonalDegreeMat, n);
-    freeMemory(dataPoints,n);
+    dataPoints vectors = parseDataPoints(points);
+    matrix diagonalDegreeMat = diagonalDegreeMatrix(vectors);
+    PyObject *result = parseResultMatrix(diagonalDegreeMat);
+    freeMatrix(diagonalDegreeMat);
+    freeDataPoints(vectors);
     return result;
 }
 
@@ -132,14 +113,13 @@ static PyObject *norm(PyObject *self, PyObject *args)
     PyObject *points;
     if (!PyArg_ParseTuple(args, "O", &points))
         return NULL;
-    // if (!PyList_Check(points))
+    // if (!PySequence_Check(points))
     //     return NULL;
-    all_vecs *dataPoints = parseDataPoints(points);
-    int n = dataPoints->num_vectors;
-    double **normalizedMat = normalizedSimilarityMatrix(*dataPoints);
-    PyObject *result = parseResultMatrix(normalizedMat, n, n);
-    freeMatrix(normalizedMat, n);
-    freeMemory(dataPoints, n);
+    dataPoints vectors = parseDataPoints(points);
+    matrix normalizedMat = normalizedSimilarityMatrix(vectors);
+    PyObject *result = parseResultMatrix(normalizedMat);
+    freeMatrix(normalizedMat);
+    freeDataPoints(vectors);
     return result;
 }
 
@@ -164,12 +144,12 @@ static PyMethodDef symnmfMethods[] = {
 
 static struct PyModuleDef symnmfmodule = {
     PyModuleDef_HEAD_INIT,
-    "symnmf",
+    "_symnmf",
     NULL,
     -1,
     symnmfMethods};
 
-PyMODINIT_FUNC PyInit_symnmf(void)
+PyMODINIT_FUNC PyInit__symnmf(void)
 {
     PyObject *m;
     m = PyModule_Create(&symnmfmodule);

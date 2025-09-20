@@ -39,6 +39,7 @@ matrix updateH(matrix H, matrix W);
 matrix iterateAlgorithm(matrix H, matrix W);
 int calculateNumOfPoints(char *filename);
 int calculateDimension(char *filename);
+void printDataPoints(dataPoints points);
 
 void testMatrixMultiplication();
 void testDistance();

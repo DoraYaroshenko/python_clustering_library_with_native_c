@@ -132,6 +132,13 @@ void printVector(vector vec)
     printf("\n");
 }
 
+void printDataPoints(dataPoints points){
+    int i;
+    for(i=0;i<points.num_vectors;i++){
+        printVector(points.all_vectors[i]);
+    }
+}
+
 matrix transpose(matrix mat)
 {
     matrix transposedMatrix = createMatrix(mat.numOfCols, mat.numOfRows);
@@ -236,7 +243,7 @@ void errorHandling()
 
 int calculateNumOfPoints(char *filename)
 {
-    int numOfPoints;
+    int numOfPoints = 0;
     double n;
     char c;
     FILE *fp = fopen(filename, "r");
