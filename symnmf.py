@@ -23,7 +23,7 @@ def degree_matrix(A):
 def normalized_similarity_mat(D, A):
     d = np.diag(D)
     D_power = np.diag(1.0 / np.sqrt(d)) # מעלים את האלכסון בחזקת מינוס חצי שזה כמו אחד חלקי שורש ומציבים אותו באלכסון המטריצה החדשה שלנו
-    W = D_inv_sqrt @ A @ D_inv_sqrt # מחשבים את הביטוי שהוגדר
+    W = D_power @ A @ D_power # מחשבים את הביטוי שהוגדר
     return W
 
 def init_H(W, K):
@@ -33,7 +33,7 @@ def init_H(W, K):
     H = np.random.uniform(0, upper, size=(n, K))
     return H
 
-def printmat(A):
+def print_mat(A):
     for row in A:
         line = ",".join(f"{val:.4f}" for val in row)
         print(line)
@@ -44,18 +44,18 @@ def getInputVariables():
         print("An Error Has Occurred")
         sys.exit(1)
 
-    K = float(sys.argv[1])
+    K = int(sys.argv[1])
     goal = sys.argv[2]
     file_name = sys.argv[3]
     return K, goal, file_name
 
-def getDataPoints(file_name):
+def getObservations(file_name):
     vectors = pd.read_csv(file_name, header=None)
-    vectors.columns = [f"coordinate {i}" for i in range(df.shape[1])]
-    vectors.index.name = "key"
+    columns_names = [f"coordinate {i}" for i in range(vectors.shape[1])]
+    vectors.columns = columns_names
     return vectors
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     K, goal, file_name = getInputVariables() #ok
     vectors = getObservations(file_name) #ok
     N = len(vectors) #ok
@@ -76,4 +76,4 @@ if _name_ == "_main_":
         print_mat(D)
     else: # goal == "norm"
         W = symnmfmodule.norm(points_array)
-        print_mat(w)
+        print_mat(W)
