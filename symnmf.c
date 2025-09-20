@@ -9,13 +9,12 @@ vector createVector(int dim)
 {
     vector newVec;
     newVec.dimension = dim;
-    newVec.coordinates = (double *)malloc(sizeof(double) * newVec.dimension);
+    newVec.coordinates = (double *)calloc(newVec.dimension, sizeof(double));
     return newVec;
 }
 
 void freeVector(vector vec)
 {
-    int i;
     free(vec.coordinates);
 }
 
@@ -25,10 +24,10 @@ matrix createMatrix(int rows, int cols)
     matrix newMatrix;
     newMatrix.numOfRows = rows;
     newMatrix.numOfCols = cols;
-    newMatrix.matrixEntries = (double **)malloc(sizeof(double *) * newMatrix.numOfRows);
+    newMatrix.matrixEntries = (double **)calloc(newMatrix.numOfRows, sizeof(double *));
     for (i = 0; i < newMatrix.numOfRows; i++)
     {
-        newMatrix.matrixEntries[i] = (double *)malloc(sizeof(double) * newMatrix.numOfCols);
+        newMatrix.matrixEntries[i] = (double *)calloc(newMatrix.numOfCols, sizeof(double));
     }
     return newMatrix;
 }
@@ -68,17 +67,18 @@ void freeDataPoints(dataPoints all_vectors)
 
 matrix matrixMultiplication(matrix a, matrix b)
 {
-    if (a.numOfCols != b.numOfRows)
-        errorHandling();
     matrix resMatrix = createMatrix(a.numOfRows, b.numOfCols);
     int i;
     int j;
-    double sum = 0;
+    double sum;
     int k;
+    if (a.numOfCols != b.numOfRows)
+        errorHandling();
     for (i = 0; i < a.numOfRows; i++)
     {
         for (j = 0; j < b.numOfCols; j++)
         {
+            sum = 0;
             for (k = 0; k < b.numOfRows; k++)
             {
                 sum += a.matrixEntries[i][k] * b.matrixEntries[k][j];
@@ -160,11 +160,11 @@ double trace(matrix mat)
 
 matrix substractMatrices(matrix A, matrix B)
 {
-    if (A.numOfRows != B.numOfRows || A.numOfCols != B.numOfCols)
-        errorHandling();
     matrix result = createMatrix(A.numOfRows, A.numOfCols);
     int i;
     int j;
+    if (A.numOfRows != B.numOfRows || A.numOfCols != B.numOfCols)
+        errorHandling();
     for (i = 0; i < A.numOfRows; i++)
     {
         for (j = 0; j < A.numOfCols; j++)
@@ -177,8 +177,6 @@ matrix substractMatrices(matrix A, matrix B)
 
 matrix updateH(matrix H, matrix W)
 {
-    if (H.numOfRows != W.numOfRows)
-        errorHandling();
     double beta = 0.5;
     matrix updatedH = createMatrix(H.numOfRows, H.numOfCols);
     matrix WH = matrixMultiplication(W, H);
@@ -187,6 +185,8 @@ matrix updateH(matrix H, matrix W)
     matrix HMulTransposedHMulH = matrixMultiplication(HMulTransposedH, H);
     int i;
     int j;
+    if (H.numOfRows != W.numOfRows)
+        errorHandling();
     for (i = 0; i < H.numOfRows; i++)
     {
         for (j = 0; j < H.numOfCols; j++)
@@ -237,7 +237,7 @@ void errorHandling()
 int calculateNumOfPoints(char *filename)
 {
     int numOfPoints;
-    double coordinate;
+    double n;
     char c;
     FILE *fp = fopen(filename, "r");
     if (!fp)
@@ -245,7 +245,7 @@ int calculateNumOfPoints(char *filename)
         errorHandling();
         exit(1);
     }
-    while (fscanf(fp, "%lf%c", &numOfPoints, &c) == 2)
+    while (fscanf(fp, "%lf%c", &n, &c) == 2)
     {
         if (c == '\n')
             numOfPoints++;
@@ -254,10 +254,11 @@ int calculateNumOfPoints(char *filename)
     return numOfPoints;
 }
 
-int calculateDimension(char *filename){
-    int dimension;
+int calculateDimension(char *filename)
+{
+    int dimension=0;
     FILE *fp = fopen(filename, "r");
-    int n;
+    double n;
     char c;
     if (!fp)
     {
@@ -281,9 +282,11 @@ dataPoints getInput(char *filename)
     char c;
     int numOfPoints = calculateNumOfPoints(filename);
     int dimension = calculateDimension(filename);
-    int i=0,j=0;
-    dataPoints points = createDataPoints(numOfPoints,dimension);
+    int i = 0, j = 0;
+    dataPoints points = createDataPoints(numOfPoints, dimension);
     FILE *fp = fopen(filename, "r");
+    /*printf("num of points: %d\n",numOfPoints);
+    printf("dimension: %d\n",dimension);*/
     if (!fp)
     {
         errorHandling();
@@ -296,7 +299,7 @@ dataPoints getInput(char *filename)
         if (c == '\n')
         {
             i++;
-            j=0;
+            j = 0;
         }
     }
     fclose(fp);
@@ -309,13 +312,14 @@ matrix similarityMatrix(dataPoints points)
     matrix outputMatrix = createMatrix(n, n);
     int i;
     int j;
-    for (i = 0; i < n; i++)
+    for (i = 0; i < outputMatrix.numOfRows; i++)
     {
-        for (j = 0; j < n; j++)
+        for (j = 0; j < outputMatrix.numOfCols; j++)
         {
             if (j != i)
             {
                 double exponent = -pow(distance(points.all_vectors[i], points.all_vectors[j]), 2) / 2;
+                /*printf("%.4f\n",exponent);*/ 
                 outputMatrix.matrixEntries[i][j] = exp(exponent);
             }
             else
@@ -333,10 +337,10 @@ matrix diagonalDegreeMatrix(dataPoints points)
     int i;
     int j;
     double rowSum;
-    for (i = 0; i < n; i++)
+    for (i = 0; i < similarityMat.numOfRows; i++)
     {
         rowSum = 0;
-        for (j = 0; j < n; j++)
+        for (j = 0; j < similarityMat.numOfCols; j++)
         {
             rowSum += similarityMat.matrixEntries[i][j];
         }
@@ -348,13 +352,12 @@ matrix diagonalDegreeMatrix(dataPoints points)
 
 matrix normalizedSimilarityMatrix(dataPoints points)
 {
-    int n = points.num_vectors;
     matrix similarityMat = similarityMatrix(points);
     matrix degreeMat = diagonalDegreeMatrix(points);
     int i;
     matrix mulMat;
     matrix resMatrix;
-    for (i = 0; i < n; i++)
+    for (i = 0; i < degreeMat.numOfRows; i++)
     {
         degreeMat.matrixEntries[i][i] = 1 / sqrt(degreeMat.matrixEntries[i][i]);
     }
@@ -366,52 +369,57 @@ matrix normalizedSimilarityMatrix(dataPoints points)
     return resMatrix;
 }
 
-/*int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     char *goal;
-    int i;
     char *path;
     dataPoints points;
-    int n;
-    matrix *outputMatrix;
+    /*int i;
+    int n;*/
+    matrix outputMatrix;
     if (argc != 3)
         return (1);
     goal = argv[1];
+    /* printf("Goal: %s\n",goal);*/
     path = argv[2];
+    /* printf("Path: %s\n",path);*/
     points = getInput(path);
-    n = points.num_vectors;
+    /*n = points.num_vectors;
     for(i=0;i<n;i++){
-        printVector(&points.all_vectors[i]);
-    }
-    if (!strcmp(goal, "sym"))
+        printVector(points.all_vectors[i]);
+        printf("\n");
+    }*/
+    if (strcmp(goal, "sym")==0)
     {
+        /* printf("The goal is sym\n");*/
         outputMatrix = similarityMatrix(points);
     }
-    if (!strcmp(goal, "ddg"))
+    if (strcmp(goal, "ddg")==0)
     {
+        /* printf("The goal is ddg\n");*/
         outputMatrix = diagonalDegreeMatrix(points);
     }
-    if (!strcmp(goal, "norm"))
+    if (strcmp(goal, "norm")==0)
     {
+        /* printf("The goal is norm\n");*/
         outputMatrix = normalizedSimilarityMatrix(points);
     }
-    printMatrix(outputMatrix, n, n);
-    freeMatrix(outputMatrix, n);
-    freeMemory(&points, n);
-    return (0);
-}*/
-
-int main()
-{
-    /*testMatrixMultiplication();
-     testDistance();
-     testSimilarityMatrix();
-     testDiagonalDegreeMatrix();
-     testNormalizedSimilarityMatrix();
-     testTranspose();
-     testTrace();
-     testSubstractMatrices();
-     */
-    testUpdateH();
+    printMatrix(outputMatrix);
+    freeMatrix(outputMatrix);
+    freeDataPoints(points);
     return (0);
 }
+
+/*int main()
+{
+    testMatrixMultiplication();
+    testDistance();
+    testSimilarityMatrix();
+    testDiagonalDegreeMatrix();
+    testNormalizedSimilarityMatrix();
+    testTranspose();
+    testTrace();
+    testSubstractMatrices();
+    testUpdateH();
+    return (0);
+}*/

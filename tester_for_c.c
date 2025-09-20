@@ -7,12 +7,12 @@
 /*checked and workes -> printMatrix works, matrixMultiplication works*/
 void testMatrixMultiplication()
 {
-    printf("Testing matrix multiplication and printMatrix");
     matrix A = createMatrix(3,4);
     matrix B = createMatrix(4,3);
     matrix res;
     int i;
     int j;
+    printf("Testing matrix multiplication and printMatrix\n");
     for (i = 0; i < A.numOfRows; i++)
     {
         for (j = 0; j < A.numOfCols; j++)
@@ -42,6 +42,7 @@ void testDistance()
     vector a = createVector(3);
     vector b = createVector(3);
     int i;
+    printf("Testing distance and printVector\n");
     for (i = 0; i < a.dimension; i++)
     {
         a.coordinates[i] = i;
@@ -61,6 +62,7 @@ void testSimilarityMatrix()
     int j;
     matrix similarityMat;
     dataPoints points = createDataPoints(3,4);
+    printf("Testing similarityMatrix\n");
     for (i = 0; i < points.num_vectors; i++)
     {
         for (j = 0; j < 4; j++)
@@ -71,7 +73,7 @@ void testSimilarityMatrix()
     }
     similarityMat = similarityMatrix(points);
     printMatrix(similarityMat);
-    freeMemory(points);
+    freeDataPoints(points);
     freeMatrix(similarityMat);
 }
 
@@ -82,6 +84,7 @@ void testDiagonalDegreeMatrix()
     int j;
     matrix diagonalDegreeMat;
     dataPoints points = createDataPoints(3,4);
+    printf("Testing diagonalDegreeMatrix\n");
     for (i = 0; i < 3; i++)
     {
         for (j = 0; j < 4; j++)
@@ -99,101 +102,97 @@ void testNormalizedSimilarityMatrix()
 {
     int i;
     int j;
-    double **normalizedMat;
-    all_vecs points;
-    points.all_vectors = (vector *)malloc(sizeof(vector) * 3);
-    points.num_vectors = 3;
+    matrix normalizedMat;
+    dataPoints points = createDataPoints(3,4);
+    printf("Testing normalizedSimilarityMatrix\n");
     for (i = 0; i < 3; i++)
     {
-        points.all_vectors[i].dimension = 4;
-        points.all_vectors[i].coordinates = (double *)malloc(sizeof(double) * 4);
         for (j = 0; j < 4; j++)
         {
             points.all_vectors[i].coordinates[j] = i + j;
         }
-        printVector(&points.all_vectors[i]);
+        printVector(points.all_vectors[i]);
     }
     normalizedMat = normalizedSimilarityMatrix(points);
-    printMatrix(normalizedMat, 3, 3);
-    freeMemory(&points, 3);
-    freeMatrix(normalizedMat, 3);
+    printMatrix(normalizedMat);
+    freeDataPoints(points);
+    freeMatrix(normalizedMat);
 }
 /*tested -> transpose works*/
 void testTranspose()
 {
-    double **A = (double **)malloc(sizeof(double *) * 3);
-    double **res;
+    matrix A = createMatrix(3,4);
+    matrix res;
     int i;
     int j;
+    printf("Testing transpose\n");
     for (i = 0; i < 3; i++)
     {
-        A[i] = (double *)malloc(sizeof(double) * 4);
         for (j = 0; j < 4; j++)
         {
-            A[i][j] = i * j + j;
+            A.matrixEntries[i][j] = i * j + j;
         }
     }
     printf("Original matrix:\n");
-    printMatrix(A, 3, 4);
-    res = transpose(A, 3, 4);
+    printMatrix(A);
+    res = transpose(A);
     printf("Transposed matrix:\n");
-    printMatrix(res, 4, 3);
-    freeMatrix(res, 4);
-    freeMatrix(A, 3);
+    printMatrix(res);
+    freeMatrix(res);
+    freeMatrix(A);
 }
 
 void testTrace()
 {
-    double **A = (double **)malloc(sizeof(double *) * 3);
+    matrix A = createMatrix(3,3);
     double t;
     int i;
     int j;
+    printf("Testing trace\n");
     for (i = 0; i < 3; i++)
     {
-        A[i] = (double *)malloc(sizeof(double) * 3);
         for (j = 0; j < 3; j++)
         {
-            A[i][j] = i * j + j;
+            A.matrixEntries[i][j] = i * j + j;
         }
     }
     printf("Original matrix:\n");
-    printMatrix(A, 3, 3);
-    t = trace(A, 3);
+    printMatrix(A);
+    t = trace(A);
     printf("%f\n", t);
-    freeMatrix(A, 3);
+    freeMatrix(A);
 }
 
 /*tested - substractMatrices works*/
 void testSubstractMatrices()
 {
-    double **A = (double **)malloc(sizeof(double *) * 3);
-    double **B = (double **)malloc(sizeof(double *) * 3);
-    double **res;
+    matrix A = createMatrix(3,4);
+    matrix B = createMatrix(3,4);
+    matrix res;
     int i;
     int j;
+    printf("Testing substractMatrices\n");
     for (i = 0; i < 3; i++)
     {
-        A[i] = (double *)malloc(sizeof(double) * 4);
         for (j = 0; j < 4; j++)
         {
-            A[i][j] = i * j + j;
+            A.matrixEntries[i][j] = i * j + j;
         }
     }
-    printMatrix(A, 3, 4);
+    printMatrix(A);
     for (i = 0; i < 3; i++)
     {
-        B[i] = (double *)malloc(sizeof(double) * 4);
         for (j = 0; j < 4; j++)
         {
-            B[i][j] = 1;
+            B.matrixEntries[i][j] = 1;
         }
     }
-    printMatrix(B, 3, 4);
-    res = substractMatrices(A, B, 3, 4);
-    printMatrix(res, 3, 4);
-    freeMatrix(res, 3);
-    freeMatrix(A, 3);
-    freeMatrix(B, 3);
+    printMatrix(B);
+    res = substractMatrices(A, B);
+    printMatrix(res);
+    freeMatrix(res);
+    freeMatrix(A);
+    freeMatrix(B);
 }
 
 /*tester -> updateH works, iterateAlgorithm has segmentation fault*/
@@ -201,44 +200,40 @@ void testUpdateH()
 {
     int i;
     int j;
-    double **H;
-    double **updatedH;
-    double **W;
-    double **result;
-    all_vecs points;
-    points.all_vectors = (vector *)malloc(sizeof(vector) * 3);
-    points.num_vectors = 3;
+    matrix H;
+    matrix updatedH;
+    matrix W;
+    matrix result;
+    dataPoints points = createDataPoints(3,4);
+    printf("Testing updateH and iterateAlgorithm\n");
     printf("Datapoints:\n");
     for (i = 0; i < 3; i++)
     {
-        points.all_vectors[i].dimension = 4;
-        points.all_vectors[i].coordinates = (double *)malloc(sizeof(double) * 4);
         for (j = 0; j < 4; j++)
         {
             points.all_vectors[i].coordinates[j] = i + j;
         }
-        printVector(&points.all_vectors[i]);
+        printVector(points.all_vectors[i]);
     }
     W = normalizedSimilarityMatrix(points);
     printf("W:\n");
-    printMatrix(W,3,3);
-    H = (double**)malloc(sizeof(double*)*3);
+    printMatrix(W);
+    H = createMatrix(3,2);
     for(i=0;i<3;i++){
-        H[i] = (double*)malloc(sizeof(double)*2);
         for(j=0;j<2;j++){
-            H[i][j] = 0.7929;
+            H.matrixEntries[i][j] = 0.7929;
         }
     }
     printf("H:\n");
-    printMatrix(H,3,2);
-    updatedH = updateH(H,W,3,2);
+    printMatrix(H);
+    updatedH = updateH(H,W);
     printf("Updated H:\n");
-    printMatrix(updatedH,3,2);
-    result = iterateAlgorithm(H,W,3,2);
-    freeMatrix(updatedH,3);
+    printMatrix(updatedH);
+    result = iterateAlgorithm(H,W);
+    freeMatrix(updatedH);
     printf("Final H:\n");
-    printMatrix(result,3,2);
-    freeMatrix(updatedH,3);
-    freeMatrix(H,3);
-    freeMatrix(W,3);
+    printMatrix(result);
+    freeMatrix(H);
+    freeMatrix(W);
+    freeDataPoints(points);
 }
