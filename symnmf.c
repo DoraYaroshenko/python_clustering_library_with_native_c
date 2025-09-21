@@ -124,12 +124,11 @@ void printVector(vector vec)
     {
         if (i == vec.dimension - 1)
         {
-            printf("%.4f", (vec.coordinates)[i]);
+            printf("%.4f\n", (vec.coordinates)[i]);
         }
         else
             printf("%.4f,", (vec.coordinates)[i]);
     }
-    printf("\n");
 }
 
 void printDataPoints(dataPoints points){
@@ -192,13 +191,13 @@ matrix updateH(matrix H, matrix W)
     matrix HMulTransposedHMulH = matrixMultiplication(HMulTransposedH, H);
     int i;
     int j;
-    if (H.numOfRows != W.numOfRows)
-        errorHandling();
     for (i = 0; i < H.numOfRows; i++)
     {
         for (j = 0; j < H.numOfCols; j++)
         {
-            updatedH.matrixEntries[i][j] = H.matrixEntries[i][j] * (1 - beta + beta * (WH.matrixEntries[i][j] / HMulTransposedHMulH.matrixEntries[i][j]));
+            double denom = HMulTransposedHMulH.matrixEntries[i][j];
+            if(denom==0) denom+=+0.000001;
+            updatedH.matrixEntries[i][j] = H.matrixEntries[i][j] * (1 - beta + beta * (WH.matrixEntries[i][j] / denom));
         }
     }
     freeMatrix(WH);
@@ -226,12 +225,12 @@ matrix iterateAlgorithm(matrix H, matrix W)
                 frobeniusNorm += pow(fabs(updatedHMinusH.matrixEntries[j][l]), 2);
             }
         }
-        if (frobeniusNorm < EPS)
-            break;
         freeMatrix(updatedHMinusH);
         prevH = H;
         H = updatedH;
         freeMatrix(prevH);
+        if (frobeniusNorm < EPS)
+            break;
     }
     return H;
 }
@@ -292,8 +291,6 @@ dataPoints getInput(char *filename)
     int i = 0, j = 0;
     dataPoints points = createDataPoints(numOfPoints, dimension);
     FILE *fp = fopen(filename, "r");
-    /*printf("num of points: %d\n",numOfPoints);
-    printf("dimension: %d\n",dimension);*/
     if (!fp)
     {
         errorHandling();
@@ -326,7 +323,6 @@ matrix similarityMatrix(dataPoints points)
             if (j != i)
             {
                 double exponent = -pow(distance(points.all_vectors[i], points.all_vectors[j]), 2) / 2;
-                /*printf("%.4f\n",exponent);*/ 
                 outputMatrix.matrixEntries[i][j] = exp(exponent);
             }
             else
@@ -381,34 +377,22 @@ int main(int argc, char **argv)
     char *goal;
     char *path;
     dataPoints points;
-    /*int i;
-    int n;*/
     matrix outputMatrix;
     if (argc != 3)
         return (1);
     goal = argv[1];
-    /* printf("Goal: %s\n",goal);*/
     path = argv[2];
-    /* printf("Path: %s\n",path);*/
     points = getInput(path);
-    /*n = points.num_vectors;
-    for(i=0;i<n;i++){
-        printVector(points.all_vectors[i]);
-        printf("\n");
-    }*/
     if (strcmp(goal, "sym")==0)
     {
-        /* printf("The goal is sym\n");*/
         outputMatrix = similarityMatrix(points);
     }
     if (strcmp(goal, "ddg")==0)
     {
-        /* printf("The goal is ddg\n");*/
         outputMatrix = diagonalDegreeMatrix(points);
     }
     if (strcmp(goal, "norm")==0)
     {
-        /* printf("The goal is norm\n");*/
         outputMatrix = normalizedSimilarityMatrix(points);
     }
     printMatrix(outputMatrix);
@@ -416,17 +400,3 @@ int main(int argc, char **argv)
     freeDataPoints(points);
     return (0);
 }
-
-/*int main()
-{
-    testMatrixMultiplication();
-    testDistance();
-    testSimilarityMatrix();
-    testDiagonalDegreeMatrix();
-    testNormalizedSimilarityMatrix();
-    testTranspose();
-    testTrace();
-    testSubstractMatrices();
-    testUpdateH();
-    return (0);
-}*/

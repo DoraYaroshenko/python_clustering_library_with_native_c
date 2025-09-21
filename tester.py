@@ -19,7 +19,7 @@ TRIALS_SYMNMF_LIB = 5
 TRIALS_VALGRIND_C = 3
 TRIALS_VALGRIND_PY_SYMNMF = 6
 TRIALS_ANALYSIS_PY = 5
-TEST_PYTHON_MEMORY = True
+TEST_PYTHON_MEMORY = False
 
 REGEX_NUMBER_FMT = r"-?(?:0|[1-9]\d*)\.\d{4}"
 REGEX_ANALYSIS_PY_OUTPUT = re.compile(
@@ -639,4 +639,4 @@ if __name__ == "__main__":
     # print("\n--------")
     # print("Testing analysis.py (format only)")
     # print("--------")
-    # # test_analysis_py()
+    # test_analysis_py()

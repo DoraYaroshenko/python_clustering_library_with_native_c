@@ -85,7 +85,7 @@ static PyObject *sym(PyObject *self, PyObject *args)
     // if (!PySequence_Check(points))
     //     return NULL;
     dataPoints vectors = parseDataPoints(points);
-    printDataPoints(vectors);
+    /*printDataPoints(vectors);*/
     matrix similarityMat = similarityMatrix(vectors);
     PyObject *result = parseResultMatrix(similarityMat);
     freeMatrix(similarityMat);
