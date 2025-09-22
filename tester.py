@@ -636,7 +636,7 @@ if __name__ == "__main__":
     print("--------")
     test_with_valgrind()
 
-    # print("\n--------")
-    # print("Testing analysis.py (format only)")
-    # print("--------")
-    # test_analysis_py()
+    print("\n--------")
+    print("Testing analysis.py (format only)")
+    print("--------")
+    test_analysis_py()

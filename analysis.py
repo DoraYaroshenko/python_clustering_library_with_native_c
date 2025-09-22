@@ -75,7 +75,7 @@ if __name__ == "__main__":
         print("Incorrect number of clusters!")
         sys.exit(1)
     points_array=vectors.to_numpy()
-    H = symnmf.getFinalH()
+    H = symnmf.getFinalH(points_array,K)
     labels_sym = np.argmax(H, axis=1)
     sym_score = silhouette_score(points_array, labels_sym)
     final_centroids = kmeans(K,vectors)

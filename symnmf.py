@@ -31,7 +31,7 @@ def getDataPoints(file_name):
     vectors.index.name = "key"
     return vectors
 
-def getFinalH():
+def getFinalH(points_array, K):
     W = _symnmf.norm(points_array)
     H = init_H(W, K)
     H = _symnmf.symnmf(H, W)
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     vectors = getDataPoints(file_name)
     points_array=vectors.to_numpy()
     if goal == "symnmf":
-        H = getFinalH()
+        H = getFinalH(points_array, K)
         printmat(H)
     elif goal == "sym":
         A = _symnmf.sym(points_array)

@@ -29,28 +29,14 @@ Testing C
 [32mgoal [1;3mddg[22;23m succeeded[0m
 [32mgoal [1;3mnorm[22;23m succeeded[0m
 
-Testing python 'simple' goals
-Testing [1;3msym[22;23m:
-[31m[prog=python,goal=sym] failure: process had a non-zero return code [1][0m
-[31mgoal [1;3msym[22;23m failed[0m
-Testing [1;3mddg[22;23m:
-[31m[prog=python,goal=ddg] failure: process had a non-zero return code [1][0m
-[31mgoal [1;3mddg[22;23m failed[0m
-Testing [1;3mnorm[22;23m:
-[31m[prog=python,goal=norm] failure: process had a non-zero return code [1][0m
-[31mgoal [1;3mnorm[22;23m failed[0m
+[33m[3mTesting python is disabled[0m
 
-Testing python [1;3msynmnf[22;23m goal
-trial 1/6
-[31m[prog=python,goal=symnmf] failure: process had a non-zero return code [1][0m
-trial 2/6
-[31m[prog=python,goal=symnmf] failure: process had a non-zero return code [1][0m
-trial 3/6
-[31m[prog=python,goal=symnmf] failure: process had a non-zero return code [1][0m
-trial 4/6
-[31m[prog=python,goal=symnmf] failure: process had a non-zero return code [1][0m
-trial 5/6
-[31m[prog=python,goal=symnmf] failure: process had a non-zero return code [1][0m
-trial 6/6
-[31m[prog=python,goal=symnmf] failure: process had a non-zero return code [1][0m
-[31mfailure: no trial succeeded[0m
+--------
+Testing analysis.py (format only)
+--------
+trial 1/5
+trial 2/5
+trial 3/5
+trial 4/5
+trial 5/5
+[32msuccess[0m
