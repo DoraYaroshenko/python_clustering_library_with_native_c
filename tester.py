@@ -219,7 +219,6 @@ def execute_python_program(
         pass_fds=pass_fds,
         env=env,
     )
-
     if use_valgrind:
         logfile.seek(0)
         return result, logfile
@@ -387,7 +386,7 @@ def test_goal(
     filename: str,
     use_valgrind: bool,
     target_matrix,
-    k=0,
+    k=2,
 ) -> bool:
     if program_type is ProgramType.PYTHON and goal == "symnmf":
         assert k > 1

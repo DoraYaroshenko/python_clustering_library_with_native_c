@@ -5,12 +5,23 @@
 #include <math.h>
 #include "symnmf.h"
 
-vector createVector(int dim)
+/*
+    TODO: in all function make a cleanup goto if you fail to malloc stuff
+    make sure that your 'free<*>' checks that the pointers are not NULL and frees if they are not
+*/
+
+/*
+    TODO: make 0 (or -1) and 1 globals for FAIL and SUCCESS and return those,
+    then maybe change !function() to function() != SUCCESS
+*/
+
+int initializeVector(int dim, vector *vec)
 {
-    vector newVec;
-    newVec.dimension = dim;
-    newVec.coordinates = (double *)calloc(newVec.dimension, sizeof(double));
-    return newVec;
+    vec->dimension = dim;
+    vec->coordinates = (double *)calloc(dim, sizeof(double));
+    if (vec->coordinates == NULL)
+        return 0;
+    return 1;
 }
 
 void freeVector(vector vec)
@@ -18,18 +29,21 @@ void freeVector(vector vec)
     free(vec.coordinates);
 }
 
-matrix createMatrix(int rows, int cols)
+int initializeMatrix(int rows, int cols, matrix *newMatrix)
 {
     int i;
-    matrix newMatrix;
-    newMatrix.numOfRows = rows;
-    newMatrix.numOfCols = cols;
-    newMatrix.matrixEntries = (double **)calloc(newMatrix.numOfRows, sizeof(double *));
-    for (i = 0; i < newMatrix.numOfRows; i++)
+    newMatrix->numOfRows = rows;
+    newMatrix->numOfCols = cols;
+    newMatrix->matrixEntries = (double **)calloc(newMatrix->numOfRows, sizeof(double *));
+    if (newMatrix->matrixEntries == NULL)
+        return 0;
+    for (i = 0; i < newMatrix->numOfRows; i++)
     {
-        newMatrix.matrixEntries[i] = (double *)calloc(newMatrix.numOfCols, sizeof(double));
+        newMatrix->matrixEntries[i] = (double *)calloc(newMatrix->numOfCols, sizeof(double));
+        if (newMatrix->matrixEntries[i] == NULL)
+            return 0;
     }
-    return newMatrix;
+    return 1;
 }
 
 void freeMatrix(matrix mat)
@@ -37,22 +51,29 @@ void freeMatrix(matrix mat)
     int i;
     for (i = 0; i < mat.numOfRows; i++)
     {
-        free(mat.matrixEntries[i]);
+        if (mat.matrixEntries[i] != NULL)
+        {
+            free(mat.matrixEntries[i]);
+        }
     }
     free(mat.matrixEntries);
 }
 
-dataPoints createDataPoints(int numOfVectors, int dim)
+int initializeDataPoints(int numOfVectors, int dim, dataPoints *points)
 {
     int i;
-    dataPoints allVectors;
-    allVectors.num_vectors = numOfVectors;
-    allVectors.all_vectors = (vector *)malloc(sizeof(vector) * numOfVectors);
-    for (i = 0; i < allVectors.num_vectors; i++)
+    points->num_vectors = numOfVectors;
+    points->all_vectors = (vector *)malloc(sizeof(vector) * numOfVectors);
+    if (points->all_vectors == NULL)
+        return 0;
+    for (i = 0; i < points->num_vectors; i++)
     {
-        allVectors.all_vectors[i] = createVector(dim);
+        vector new_vec; /* TODO: declare this at the start of the function */
+        if (!initializeVector(dim, &new_vec))
+            return 0;
+        points->all_vectors[i] = new_vec;
     }
-    return allVectors;
+    return 1;
 }
 
 void freeDataPoints(dataPoints all_vectors)
@@ -65,15 +86,16 @@ void freeDataPoints(dataPoints all_vectors)
     free(all_vectors.all_vectors);
 }
 
-matrix matrixMultiplication(matrix a, matrix b)
+int matrixMultiplication(matrix a, matrix b, matrix *resMatrix)
 {
-    matrix resMatrix = createMatrix(a.numOfRows, b.numOfCols);
-    int i;
+    int i; /* TODO: declare i,j,k together? */
     int j;
     double sum;
     int k;
+    if (!initializeMatrix(a.numOfRows, b.numOfCols, resMatrix))
+        return 0;
     if (a.numOfCols != b.numOfRows)
-        errorHandling();
+        return 0;
     for (i = 0; i < a.numOfRows; i++)
     {
         for (j = 0; j < b.numOfCols; j++)
@@ -83,10 +105,10 @@ matrix matrixMultiplication(matrix a, matrix b)
             {
                 sum += a.matrixEntries[i][k] * b.matrixEntries[k][j];
             }
-            resMatrix.matrixEntries[i][j] = sum;
+            resMatrix->matrixEntries[i][j] = sum;
         }
     }
-    return resMatrix;
+    return 1;
 }
 
 double distance(vector v1, vector v2)
@@ -127,30 +149,35 @@ void printVector(vector vec)
             printf("%.4f\n", (vec.coordinates)[i]);
         }
         else
+        {
             printf("%.4f,", (vec.coordinates)[i]);
+        }
     }
 }
 
-void printDataPoints(dataPoints points){
+void printDataPoints(dataPoints points)
+{
     int i;
-    for(i=0;i<points.num_vectors;i++){
+    for (i = 0; i < points.num_vectors; i++)
+    {
         printVector(points.all_vectors[i]);
     }
 }
 
-matrix transpose(matrix mat)
+int transpose(matrix mat, matrix *transposedMatrix)
 {
-    matrix transposedMatrix = createMatrix(mat.numOfCols, mat.numOfRows);
     int i;
     int j;
+    if (!initializeMatrix(mat.numOfCols, mat.numOfRows, transposedMatrix))
+        return 0;
     for (i = 0; i < mat.numOfCols; i++)
     {
         for (j = 0; j < mat.numOfRows; j++)
         {
-            transposedMatrix.matrixEntries[i][j] = mat.matrixEntries[j][i];
+            transposedMatrix->matrixEntries[i][j] = mat.matrixEntries[j][i];
         }
     }
-    return transposedMatrix;
+    return 1;
 }
 
 double trace(matrix mat)
@@ -164,80 +191,97 @@ double trace(matrix mat)
     return sum;
 }
 
-matrix substractMatrices(matrix A, matrix B)
+int substractMatrices(matrix A, matrix B, matrix *result)
 {
-    matrix result = createMatrix(A.numOfRows, A.numOfCols);
     int i;
     int j;
+    if (!initializeMatrix(A.numOfRows, A.numOfCols, result))
+        return 0;
     if (A.numOfRows != B.numOfRows || A.numOfCols != B.numOfCols)
-        errorHandling();
+        return 0;
     for (i = 0; i < A.numOfRows; i++)
     {
         for (j = 0; j < A.numOfCols; j++)
         {
-            result.matrixEntries[i][j] = A.matrixEntries[i][j] - B.matrixEntries[i][j];
+            result->matrixEntries[i][j] = A.matrixEntries[i][j] - B.matrixEntries[i][j];
         }
     }
-    return result;
+    return 1;
 }
 
-matrix updateH(matrix H, matrix W)
+int updateH(matrix H, matrix W, matrix *updatedH)
 {
-    double beta = 0.5;
-    matrix updatedH = createMatrix(H.numOfRows, H.numOfCols);
-    matrix WH = matrixMultiplication(W, H);
-    matrix transposedH = transpose(H);
-    matrix HMulTransposedH = matrixMultiplication(H, transposedH);
-    matrix HMulTransposedHMulH = matrixMultiplication(HMulTransposedH, H);
+    double beta = 0.5; /* TODO: make global constant in header */
+    matrix WH;         /* TODO: better names */
+    matrix transposedH;
+    matrix HMulTransposedH;
+    matrix HMulTransposedHMulH;
     int i;
     int j;
+    if (!initializeMatrix(H.numOfRows, H.numOfCols, updatedH))
+        goto cleanup;
+    if (!matrixMultiplication(W, H, &WH))
+        return 0;
+    if (!transpose(H, &transposedH))
+        return 0;
+    if (!matrixMultiplication(H, transposedH, &HMulTransposedH))
+        return 0;
+    if (!matrixMultiplication(HMulTransposedH, H, &HMulTransposedHMulH))
+        return 0;
     for (i = 0; i < H.numOfRows; i++)
     {
         for (j = 0; j < H.numOfCols; j++)
         {
             double denom = HMulTransposedHMulH.matrixEntries[i][j];
-            if(denom==0) denom+=+0.000001;
-            updatedH.matrixEntries[i][j] = H.matrixEntries[i][j] * (1 - beta + beta * (WH.matrixEntries[i][j] / denom));
+            if (denom == 0)
+                denom += +0.000001;
+            updatedH->matrixEntries[i][j] = H.matrixEntries[i][j] * (1 - beta + beta * (WH.matrixEntries[i][j] / denom));
         }
     }
+    return 1;
+
+cleanup:
     freeMatrix(WH);
     freeMatrix(transposedH);
     freeMatrix(HMulTransposedH);
     freeMatrix(HMulTransposedHMulH);
-    return updatedH;
+    return 0;
 }
 
-matrix iterateAlgorithm(matrix H, matrix W)
+int iterateAlgorithm(matrix *H, matrix W)
 {
-    int max_iter = 300;
+    int max_iter = 300; /* make global constant */
     int i, j, l;
     matrix updatedH, updatedHMinusH, prevH;
     double frobeniusNorm;
     for (i = 0; i < max_iter; i++)
     {
-        updatedH = updateH(H, W);
-        updatedHMinusH = substractMatrices(updatedH, H);
+        if (!updateH(*H, W, &updatedH))
+            return 0;
+        if (!substractMatrices(updatedH, *H, &updatedHMinusH))
+            return 0;
         frobeniusNorm = 0;
-        for (j = 0; j < H.numOfRows; j++)
+        for (j = 0; j < H->numOfRows; j++)
         {
-            for (l = 0; l < H.numOfCols; l++)
+            for (l = 0; l < H->numOfCols; l++)
             {
                 frobeniusNorm += pow(fabs(updatedHMinusH.matrixEntries[j][l]), 2);
             }
         }
         freeMatrix(updatedHMinusH);
-        prevH = H;
-        H = updatedH;
+        prevH = *H;
+        *H = updatedH;
         freeMatrix(prevH);
         if (frobeniusNorm < EPS)
             break;
     }
-    return H;
+    return 1;
 }
 
 void errorHandling()
 {
     printf("An Error Has Occurred\n");
+    exit(1);
 }
 
 int calculateNumOfPoints(char *filename)
@@ -248,8 +292,7 @@ int calculateNumOfPoints(char *filename)
     FILE *fp = fopen(filename, "r");
     if (!fp)
     {
-        errorHandling();
-        exit(1);
+        return -1;
     }
     while (fscanf(fp, "%lf%c", &n, &c) == 2)
     {
@@ -262,14 +305,13 @@ int calculateNumOfPoints(char *filename)
 
 int calculateDimension(char *filename)
 {
-    int dimension=0;
+    int dimension = 0;
     FILE *fp = fopen(filename, "r");
     double n;
     char c;
     if (!fp)
     {
-        errorHandling();
-        exit(1);
+        return -1;
     }
     while (fscanf(fp, "%lf%c", &n, &c) == 2)
     {
@@ -281,24 +323,27 @@ int calculateDimension(char *filename)
     return dimension;
 }
 
-/*tested -> getInput works*/
-dataPoints getInput(char *filename)
+int getInput(char *filename, dataPoints *points)
 {
     double coordinate;
     char c;
     int numOfPoints = calculateNumOfPoints(filename);
     int dimension = calculateDimension(filename);
     int i = 0, j = 0;
-    dataPoints points = createDataPoints(numOfPoints, dimension);
     FILE *fp = fopen(filename, "r");
+    if (numOfPoints == -1)
+        return 0;
+    if (dimension == -1)
+        return 0;
+    if (!initializeDataPoints(numOfPoints, dimension, points))
+        return 0;
     if (!fp)
     {
-        errorHandling();
-        exit(1);
+        return 0;
     }
     while (fscanf(fp, "%lf%c", &coordinate, &c) == 2)
     {
-        points.all_vectors[i].coordinates[j] = coordinate;
+        points->all_vectors[i].coordinates[j] = coordinate;
         j++;
         if (c == '\n')
         {
@@ -307,39 +352,43 @@ dataPoints getInput(char *filename)
         }
     }
     fclose(fp);
-    return points;
+    return 1;
 }
 
-matrix similarityMatrix(dataPoints points)
+int similarityMatrix(dataPoints points, matrix *outputMatrix)
 {
     int n = points.num_vectors;
-    matrix outputMatrix = createMatrix(n, n);
     int i;
     int j;
-    for (i = 0; i < outputMatrix.numOfRows; i++)
+    if (!initializeMatrix(n, n, outputMatrix))
+        return 0;
+    for (i = 0; i < outputMatrix->numOfRows; i++)
     {
-        for (j = 0; j < outputMatrix.numOfCols; j++)
+        for (j = 0; j < outputMatrix->numOfCols; j++)
         {
             if (j != i)
             {
                 double exponent = -pow(distance(points.all_vectors[i], points.all_vectors[j]), 2) / 2;
-                outputMatrix.matrixEntries[i][j] = exp(exponent);
+                outputMatrix->matrixEntries[i][j] = exp(exponent);
             }
             else
-                outputMatrix.matrixEntries[i][j] = 0;
+                outputMatrix->matrixEntries[i][j] = 0;
         }
     }
-    return outputMatrix;
+    return 1;
 }
 
-matrix diagonalDegreeMatrix(dataPoints points)
+int diagonalDegreeMatrix(dataPoints points, matrix *outputMatrix)
 {
     int n = points.num_vectors;
-    matrix outputMatrix = createMatrix(n, n);
-    matrix similarityMat = similarityMatrix(points);
+    matrix similarityMat;
     int i;
     int j;
     double rowSum;
+    if (!initializeMatrix(n, n, outputMatrix))
+        return 0;
+    if (!similarityMatrix(points, &similarityMat))
+        return 0;
     for (i = 0; i < similarityMat.numOfRows; i++)
     {
         rowSum = 0;
@@ -347,29 +396,34 @@ matrix diagonalDegreeMatrix(dataPoints points)
         {
             rowSum += similarityMat.matrixEntries[i][j];
         }
-        outputMatrix.matrixEntries[i][i] = rowSum;
+        outputMatrix->matrixEntries[i][i] = rowSum;
     }
     freeMatrix(similarityMat);
-    return outputMatrix;
+    return 1;
 }
 
-matrix normalizedSimilarityMatrix(dataPoints points)
+int normalizedSimilarityMatrix(dataPoints points, matrix *resMatrix)
 {
-    matrix similarityMat = similarityMatrix(points);
-    matrix degreeMat = diagonalDegreeMatrix(points);
+    matrix similarityMat;
+    matrix degreeMat;
     int i;
     matrix mulMat;
-    matrix resMatrix;
+    if (!similarityMatrix(points, &similarityMat))
+        return 0;
+    if (!diagonalDegreeMatrix(points, &degreeMat))
+        return 0;
     for (i = 0; i < degreeMat.numOfRows; i++)
     {
-        degreeMat.matrixEntries[i][i] = 1 / sqrt(degreeMat.matrixEntries[i][i]);
+        degreeMat.matrixEntries[i][i] = 1 / (sqrt(degreeMat.matrixEntries[i][i]));
     }
-    mulMat = matrixMultiplication(degreeMat, similarityMat);
-    resMatrix = matrixMultiplication(mulMat, degreeMat);
+    if (!matrixMultiplication(degreeMat, similarityMat, &mulMat))
+        return 0;
+    if (!matrixMultiplication(mulMat, degreeMat, resMatrix))
+        return 0;
     freeMatrix(mulMat);
     freeMatrix(similarityMat);
     freeMatrix(degreeMat);
-    return resMatrix;
+    return 1;
 }
 
 int main(int argc, char **argv)
@@ -382,19 +436,27 @@ int main(int argc, char **argv)
         return (1);
     goal = argv[1];
     path = argv[2];
-    points = getInput(path);
-    if (strcmp(goal, "sym")==0)
+    /* TODO: rename to 'readPointsFromFile' since this is what it does */
+    if (!getInput(path, &points))
+        errorHandling();
+
+    if (strcmp(goal, "sym") == 0)
     {
-        outputMatrix = similarityMatrix(points);
+        if (!similarityMatrix(points, &outputMatrix))
+            errorHandling();
     }
-    if (strcmp(goal, "ddg")==0)
+    else if (strcmp(goal, "ddg") == 0)
     {
-        outputMatrix = diagonalDegreeMatrix(points);
+        if (!diagonalDegreeMatrix(points, &outputMatrix))
+            errorHandling();
     }
-    if (strcmp(goal, "norm")==0)
+    else if (strcmp(goal, "norm") == 0)
     {
-        outputMatrix = normalizedSimilarityMatrix(points);
+        if (!normalizedSimilarityMatrix(points, &outputMatrix))
+            errorHandling();
     }
+    else
+        errorHandling();
     printMatrix(outputMatrix);
     freeMatrix(outputMatrix);
     freeDataPoints(points);

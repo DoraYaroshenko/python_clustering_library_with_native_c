@@ -7,11 +7,13 @@
 /*checked and workes -> printMatrix works, matrixMultiplication works*/
 void testMatrixMultiplication()
 {
-    matrix A = createMatrix(3,4);
-    matrix B = createMatrix(4,3);
+    matrix A;
+    matrix B;
     matrix res;
     int i;
     int j;
+    if(!initializeMatrix(3,4, &A)) errorHandling();
+    if(!initializeMatrix(4,3,&B)) errorHandling();
     printf("Testing matrix multiplication and printMatrix\n");
     for (i = 0; i < A.numOfRows; i++)
     {
@@ -29,7 +31,7 @@ void testMatrixMultiplication()
         }
     }
     printMatrix(B);
-    res = matrixMultiplication(A, B);
+    if(!matrixMultiplication(A, B,&res)) errorHandling();
     printMatrix(res);
     freeMatrix(A);
     freeMatrix(B);
@@ -39,9 +41,11 @@ void testMatrixMultiplication()
 /*checked and works -> distance works and print vector works*/
 void testDistance()
 {
-    vector a = createVector(3);
-    vector b = createVector(3);
+    vector a;
+    vector b;
     int i;
+    if(!initializeVector(3,&a)) errorHandling();
+    if(!initializeVector(3,&b)) errorHandling();
     printf("Testing distance and printVector\n");
     for (i = 0; i < a.dimension; i++)
     {
@@ -61,7 +65,8 @@ void testSimilarityMatrix()
     int i;
     int j;
     matrix similarityMat;
-    dataPoints points = createDataPoints(3,4);
+    dataPoints points;
+    if(!initializeDataPoints(3,4,&points)) errorHandling();
     printf("Testing similarityMatrix\n");
     for (i = 0; i < points.num_vectors; i++)
     {
@@ -71,7 +76,7 @@ void testSimilarityMatrix()
         }
         printVector(points.all_vectors[i]);
     }
-    similarityMat = similarityMatrix(points);
+    if(!similarityMatrix(points,&similarityMat)) errorHandling();
     printMatrix(similarityMat);
     freeDataPoints(points);
     freeMatrix(similarityMat);
@@ -83,7 +88,8 @@ void testDiagonalDegreeMatrix()
     int i;
     int j;
     matrix diagonalDegreeMat;
-    dataPoints points = createDataPoints(3,4);
+    dataPoints points;
+    if(!initializeDataPoints(3,4,&points)) errorHandling();
     printf("Testing diagonalDegreeMatrix\n");
     for (i = 0; i < 3; i++)
     {
@@ -93,7 +99,7 @@ void testDiagonalDegreeMatrix()
         }
         printVector(points.all_vectors[i]);
     }
-    diagonalDegreeMat = diagonalDegreeMatrix(points);
+    if(!diagonalDegreeMatrix(points,&diagonalDegreeMat)) errorHandling();
     printMatrix(diagonalDegreeMat);
     freeMatrix(diagonalDegreeMat);
 }
@@ -103,7 +109,8 @@ void testNormalizedSimilarityMatrix()
     int i;
     int j;
     matrix normalizedMat;
-    dataPoints points = createDataPoints(3,4);
+    dataPoints points;
+    if(!initializeDataPoints(3,4,&points)) errorHandling();
     printf("Testing normalizedSimilarityMatrix\n");
     for (i = 0; i < 3; i++)
     {
@@ -113,7 +120,7 @@ void testNormalizedSimilarityMatrix()
         }
         printVector(points.all_vectors[i]);
     }
-    normalizedMat = normalizedSimilarityMatrix(points);
+    if(!normalizedSimilarityMatrix(points,&normalizedMat)) errorHandling();
     printMatrix(normalizedMat);
     freeDataPoints(points);
     freeMatrix(normalizedMat);
@@ -121,10 +128,11 @@ void testNormalizedSimilarityMatrix()
 /*tested -> transpose works*/
 void testTranspose()
 {
-    matrix A = createMatrix(3,4);
+    matrix A;
     matrix res;
     int i;
     int j;
+    if(!initializeMatrix(3,4,&A)) errorHandling();
     printf("Testing transpose\n");
     for (i = 0; i < 3; i++)
     {
@@ -135,7 +143,7 @@ void testTranspose()
     }
     printf("Original matrix:\n");
     printMatrix(A);
-    res = transpose(A);
+    if(!transpose(A,&res)) errorHandling();
     printf("Transposed matrix:\n");
     printMatrix(res);
     freeMatrix(res);
@@ -144,10 +152,11 @@ void testTranspose()
 
 void testTrace()
 {
-    matrix A = createMatrix(3,3);
+    matrix A;
     double t;
     int i;
     int j;
+    if(!initializeMatrix(3,3,&A)) errorHandling();
     printf("Testing trace\n");
     for (i = 0; i < 3; i++)
     {
@@ -166,11 +175,13 @@ void testTrace()
 /*tested - substractMatrices works*/
 void testSubstractMatrices()
 {
-    matrix A = createMatrix(3,4);
-    matrix B = createMatrix(3,4);
+    matrix A;
+    matrix B;
     matrix res;
     int i;
     int j;
+    if(!initializeMatrix(3,4,&A)) errorHandling();
+    if(!initializeMatrix(3,4,&B)) errorHandling();
     printf("Testing substractMatrices\n");
     for (i = 0; i < 3; i++)
     {
@@ -188,7 +199,7 @@ void testSubstractMatrices()
         }
     }
     printMatrix(B);
-    res = substractMatrices(A, B);
+    if(!substractMatrices(A, B,&res)) errorHandling();
     printMatrix(res);
     freeMatrix(res);
     freeMatrix(A);
@@ -203,8 +214,8 @@ void testUpdateH()
     matrix H;
     matrix updatedH;
     matrix W;
-    matrix result;
-    dataPoints points = createDataPoints(3,4);
+    dataPoints points;
+    if(!initializeDataPoints(3,4,&points)) errorHandling();
     printf("Testing updateH and iterateAlgorithm\n");
     printf("Datapoints:\n");
     for (i = 0; i < 3; i++)
@@ -215,10 +226,10 @@ void testUpdateH()
         }
         printVector(points.all_vectors[i]);
     }
-    W = normalizedSimilarityMatrix(points);
+    if(!normalizedSimilarityMatrix(points,&W)) errorHandling();
     printf("W:\n");
     printMatrix(W);
-    H = createMatrix(3,2);
+    if(!initializeMatrix(3,2,&H)) errorHandling();
     for(i=0;i<3;i++){
         for(j=0;j<2;j++){
             H.matrixEntries[i][j] = 0.7929;
@@ -226,13 +237,13 @@ void testUpdateH()
     }
     printf("H:\n");
     printMatrix(H);
-    updatedH = updateH(H,W);
+    if(!updateH(H,W,&updatedH)) errorHandling();
     printf("Updated H:\n");
     printMatrix(updatedH);
-    result = iterateAlgorithm(H,W);
+    if(!iterateAlgorithm(&H,W)) errorHandling();
     freeMatrix(updatedH);
     printf("Final H:\n");
-    printMatrix(result);
+    printMatrix(H);
     freeMatrix(H);
     freeMatrix(W);
     freeDataPoints(points);

@@ -14,6 +14,7 @@ def euclidian_distance(v1, v2):
        sum += sub ** 2
     return math.sqrt(sum)
 
+# oboze 
 def kmeans(K,vectors):
     points = vectors.values.tolist()
     centroids = []
@@ -22,7 +23,7 @@ def kmeans(K,vectors):
     for i in range(ITER):
         assigned_to_cent = [ [] for _ in range(len(centroids)) ]
         convergence = True
-        for i in points:
+        for i in points: # i in both loops??? 
             min_dist_from_centroid = sys.float_info.max
             index_of_centroid_with_min_dist = 0
             for j in range(K):
@@ -51,6 +52,7 @@ def kmeans(K,vectors):
 
 def getInputVariables():
     if len(sys.argv) != 3:
+        # errorHandling! 
         print("An Error Has Occurred")
         sys.exit(1)
     K = int(sys.argv[1])

@@ -6,9 +6,11 @@ typedef struct
 
 typedef struct
 {
+    /* TODO: change field name to 'vectors' ?*/
     vector *all_vectors;
     int num_vectors;
 } dataPoints;
+/* TODO: maybe change name to 'vectorList'? */
 
 typedef struct
 {
@@ -17,30 +19,31 @@ typedef struct
     int numOfCols;
 } matrix;
 
-vector createVector(int dim);
+int initializeVector(int dim, vector * vec);
 void freeVector(vector vec);
-dataPoints createDataPoints(int n, int d);
+int initializeDataPoints(int numOfVectors, int dim, dataPoints* points);
 void freeDataPoints(dataPoints all_vectors);
-matrix createMatrix(int rows, int cols);
+int initializeMatrix(int rows, int cols, matrix *newMatrix);
 void freeMatrix(matrix mat);
-matrix matrixMultiplication(matrix a, matrix b);
+int matrixMultiplication(matrix a, matrix b, matrix *resMatrix);
 double distance(vector v1, vector v2);
 void printMatrix(matrix mat);
 void printVector(vector vec);
 void errorHandling();
-dataPoints getInput();
-matrix similarityMatrix(dataPoints points);
-matrix diagonalDegreeMatrix(dataPoints points);
-matrix normalizedSimilarityMatrix(dataPoints points);
-matrix transpose(matrix mat);
+int getInput(char *filename, dataPoints *points);
+int similarityMatrix(dataPoints points, matrix *outputMatrix);
+int diagonalDegreeMatrix(dataPoints points, matrix *outputMatrix);
+int normalizedSimilarityMatrix(dataPoints points, matrix *resMatrix);
+int transpose(matrix mat, matrix *transposedMatrix);
 double trace(matrix mat);
-matrix substractMatrices(matrix a, matrix b);
-matrix updateH(matrix H, matrix W);
-matrix iterateAlgorithm(matrix H, matrix W);
+int substractMatrices(matrix A, matrix B, matrix *result);
+int updateH(matrix H, matrix W, matrix *updatedH);
+int iterateAlgorithm(matrix *H, matrix W);
 int calculateNumOfPoints(char *filename);
 int calculateDimension(char *filename);
 void printDataPoints(dataPoints points);
 
+/* TODO: remove these when you are handing in the assignment? */
 void testMatrixMultiplication();
 void testDistance();
 void testSimilarityMatrix();
