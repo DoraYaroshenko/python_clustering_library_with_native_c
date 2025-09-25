@@ -6,7 +6,7 @@ import _symnmf
 
 np.random.seed(1234)
 
-def errorHandling():
+def error_handling():
     print("An Error Has Occurred")
     sys.exit(1)
 
@@ -18,68 +18,60 @@ def init_H(W, K):
     H = np.random.uniform(0, upper, size=(n, K))
     return H
 
-# TODO: change name to 'printMatrix'
-def printmat(A):
+def print_matrix(A):
     for row in A:
         line = ",".join(f"{val:.4f}" for val in row)
         print(line)
 
-def getInputVariables():
-    # TODO: validate number of input variables?
+def get_input_variables():
+    if len(sys.argv) != 4:
+        error_handling()
     K = int(sys.argv[1])
     goal = sys.argv[2]
     file_name = sys.argv[3]
     return K, goal, file_name
 
-def getDataPoints(file_name):
+def get_data_points(file_name):
     vectors = pd.read_csv(file_name, header=None)
     vectors.columns = [f"coordinate {i}" for i in range(vectors.shape[1])]
     vectors.index.name = "key"
     return vectors
 
-# what is final H?
-# TODO: maybe change name to 'calculateDecompositionMatrix' or just 'calculateH'
-def getFinalH(points_array, K):
+def calculate_decomposition_matrix(points_array, K):
     W = _symnmf.norm(points_array)
     if W is None:
-        errorHandling()
+        error_handling()
     H = init_H(W, K)
     H = _symnmf.symnmf(H, W)
     if H is None:
-        errorHandling()
+        error_handling()
     return H
 
 if __name__ == "__main__":
-    # general comment: in python the convention is snake case
-    # get_input_variables
-    # getInputVariables - is in java or smth, not python
-    # you dont have to change it, this is just so you know
-    K, goal, file_name = getInputVariables()
-    vectors = getDataPoints(file_name)
+    K, goal, file_name = get_input_variables()
+    vectors = get_data_points(file_name)
     N = len(vectors)
     if K>=N or K<=1:
-        errorHandling()
-    
+        error_handling()
     points_array=vectors.to_numpy()
     match goal:
         case "sym":
             A = _symnmf.sym(points_array)
             if A is None:
-                errorHandling()
-            printmat(A)
+                error_handling()
+            print_matrix(A)
         case "symnmf":
-            H = getFinalH(points_array, K)
-            printmat(H)
+            H = calculate_decomposition_matrix(points_array, K)
+            print_matrix(H)
         case "ddg":
             D = _symnmf.ddg(points_array)
             if D is None:
-                errorHandling()
-            printmat(D)
+                error_handling()
+            print_matrix(D)
         case "norm":
             W = _symnmf.norm(points_array)
             if W is None:
-                errorHandling()
-            printmat(W)
+                error_handling()
+            print_matrix(W)
         case _:
-            errorHandling()
-    sys.exit(0) # remove - not needed
+            error_handling()

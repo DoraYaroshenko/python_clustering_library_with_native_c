@@ -5,7 +5,7 @@ import pandas as pd
 import math
 import symnmf
 EPS = 0.0001
-ITER = 300
+MAX_ITERATIONS = 300
 
 def euclidian_distance(v1, v2):
     sum = 0
@@ -14,47 +14,53 @@ def euclidian_distance(v1, v2):
        sum += sub ** 2
     return math.sqrt(sum)
 
-# oboze 
+def assign_to_closest_cluster(points,centroids,K):
+    clusters_with_assigned_points = [ [] for _ in range(K) ]
+    for point in points:
+        min_dist_from_centroid = sys.float_info.max
+        index_of_centroid_with_min_dist = 0
+        for i in range(K):
+            centroid = centroids[i]
+            distance = euclidian_distance(point, centroid)
+            if (distance<min_dist_from_centroid):
+                min_dist_from_centroid = distance
+                index_of_centroid_with_min_dist = i
+        clusters_with_assigned_points[index_of_centroid_with_min_dist].append(point)
+    return clusters_with_assigned_points
+
+def updateCentroids(centroids, clusters_with_assigned_points, K, dimension):
+    convergence = True
+    for i in range(K):
+        if not clusters_with_assigned_points[i]:
+            continue
+        num_of_assigned_points = len(clusters_with_assigned_points[i])
+        new_centroid = [0.0 for x in range(dimension)]
+        for point in clusters_with_assigned_points[i]:
+            for j in range(dimension):
+                new_centroid[j] += point[j]
+        for j in range(dimension):
+            new_centroid[j] /= num_of_assigned_points
+        if (euclidian_distance(centroids[i], new_centroid))>=EPS:
+            convergence = False
+        centroids[i] = new_centroid
+    return centroids,convergence
+
 def kmeans(K,vectors):
     points = vectors.values.tolist()
+    dimension = len(points[0])
     centroids = []
     for i in range(K):
         centroids.append(points[i].copy())
-    for i in range(ITER):
-        assigned_to_cent = [ [] for _ in range(len(centroids)) ]
-        convergence = True
-        for i in points: # i in both loops??? 
-            min_dist_from_centroid = sys.float_info.max
-            index_of_centroid_with_min_dist = 0
-            for j in range(K):
-                centroid = centroids[j]
-                distance = euclidian_distance(i, centroid)
-                if (distance<min_dist_from_centroid):
-                    min_dist_from_centroid = distance
-                    index_of_centroid_with_min_dist = j
-            assigned_to_cent[index_of_centroid_with_min_dist].append(i)
-    
-        for j in range(len(centroids)):
-            if not assigned_to_cent[j]:
-                continue
-            mean = [0.0 for x in range(len(centroids[j]))]
-            for assigned_centroid in assigned_to_cent[j]:
-                for i in range(len(assigned_centroid)):
-                    mean[i] += assigned_centroid[i]
-            for i in range(len(mean)):
-                mean[i] /= len(assigned_to_cent[j])
-            if (euclidian_distance(centroids[j], mean))>=EPS:
-                convergence = False
-            centroids[j] = mean
+    for i in range(MAX_ITERATIONS):
+        clusters_with_assigned_points = assign_to_closest_cluster(points,centroids,K)
+        centroids,convergence = updateCentroids(centroids,clusters_with_assigned_points,K,dimension)
         if convergence:
             break
     return centroids
 
-def getInputVariables():
+def get_input_variables():
     if len(sys.argv) != 3:
-        # errorHandling! 
-        print("An Error Has Occurred")
-        sys.exit(1)
+        symnmf.error_handling()
     K = int(sys.argv[1])
     file_name = sys.argv[2]
     return K, file_name
@@ -70,14 +76,14 @@ def get_cluster_association(vector, centroids):
     return association
 
 if __name__ == "__main__":
-    K, file_name = getInputVariables()
-    vectors = symnmf.getDataPoints(file_name)
+    K, file_name = get_input_variables()
+    vectors = symnmf.get_data_points(file_name)
     N = len(vectors)
     if (K>=N):
         print("Incorrect number of clusters!")
         sys.exit(1)
     points_array=vectors.to_numpy()
-    H = symnmf.getFinalH(points_array,K)
+    H = symnmf.calculate_decomposition_matrix(points_array,K)
     labels_sym = np.argmax(H, axis=1)
     sym_score = silhouette_score(points_array, labels_sym)
     final_centroids = kmeans(K,vectors)

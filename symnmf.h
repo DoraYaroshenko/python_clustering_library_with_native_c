@@ -1,3 +1,9 @@
+#define FAIL -1
+#define SUCCESS 1
+#define EPS 0.0001
+#define BETA 0.5
+#define MAXITER 300
+
 typedef struct
 {
     double *coordinates;
@@ -6,11 +12,9 @@ typedef struct
 
 typedef struct
 {
-    /* TODO: change field name to 'vectors' ?*/
-    vector *all_vectors;
-    int num_vectors;
+    vector *points;
+    int numOfPoints;
 } dataPoints;
-/* TODO: maybe change name to 'vectorList'? */
 
 typedef struct
 {
@@ -22,7 +26,7 @@ typedef struct
 int initializeVector(int dim, vector * vec);
 void freeVector(vector vec);
 int initializeDataPoints(int numOfVectors, int dim, dataPoints* points);
-void freeDataPoints(dataPoints all_vectors);
+void freeDataPoints(dataPoints allVectors);
 int initializeMatrix(int rows, int cols, matrix *newMatrix);
 void freeMatrix(matrix mat);
 int matrixMultiplication(matrix a, matrix b, matrix *resMatrix);
@@ -30,7 +34,7 @@ double distance(vector v1, vector v2);
 void printMatrix(matrix mat);
 void printVector(vector vec);
 void errorHandling();
-int getInput(char *filename, dataPoints *points);
+int readPointsFromFile(char *filename, dataPoints *points);
 int similarityMatrix(dataPoints points, matrix *outputMatrix);
 int diagonalDegreeMatrix(dataPoints points, matrix *outputMatrix);
 int normalizedSimilarityMatrix(dataPoints points, matrix *resMatrix);
