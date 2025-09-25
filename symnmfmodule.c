@@ -2,6 +2,7 @@
 #include <Python.h>
 #include "symnmf.h"
 
+/*parseDataPoints saves the given datapoints in a strucr dataPoints, so it can be used by other functions*/
 int parseDataPoints(PyObject *points, dataPoints *allVectors)
 {
     int i, j, dim, N;
@@ -35,6 +36,7 @@ cleanup:
     return FAIL;
 }
 
+/*parseMatrix saves given matrix in a struct matrix*/
 int parseMatrix(PyObject *mat, matrix *parsedMatrix)
 {
     int n, dim, i, j;
@@ -67,6 +69,7 @@ cleanup:
     return FAIL;
 }
 
+/*parseResultMatrix converts the data from the struct matrix to a Python list of lists*/
 PyObject *parseResultMatrix(matrix mat)
 {
     int i, j;
@@ -84,6 +87,7 @@ PyObject *parseResultMatrix(matrix mat)
     return resultMat;
 }
 
+/*symnmf performs symNMF using iterateAlgorithm function from symnmf.c*/
 static PyObject *symnmf(PyObject *self, PyObject *args)
 {
     PyObject *H, *W, *result = NULL;
@@ -100,6 +104,7 @@ static PyObject *symnmf(PyObject *self, PyObject *args)
     return result;
 }
 
+/*sym calculates the similarity matrix*/
 static PyObject *sym(PyObject *self, PyObject *args)
 {
     PyObject *points, *result = NULL;
@@ -116,6 +121,8 @@ static PyObject *sym(PyObject *self, PyObject *args)
     return result;
 }
 
+
+/*ddg calculates diagonal degree matrix*/
 static PyObject *ddg(PyObject *self, PyObject *args)
 {
     PyObject *points, *result = NULL;
@@ -132,6 +139,7 @@ static PyObject *ddg(PyObject *self, PyObject *args)
     return result;
 }
 
+/*calculates normalized similarity matrix*/
 static PyObject *norm(PyObject *self, PyObject *args)
 {
     PyObject *points, *result = NULL;

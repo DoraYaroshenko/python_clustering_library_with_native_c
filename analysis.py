@@ -7,6 +7,7 @@ import symnmf
 EPS = 0.0001
 MAX_ITERATIONS = 300
 
+# euclidian_distance computes euclidian distance between two vectors
 def euclidian_distance(v1, v2):
     sum = 0
     for i in range(len(v1)):
@@ -14,6 +15,7 @@ def euclidian_distance(v1, v2):
        sum += sub ** 2
     return math.sqrt(sum)
 
+# assign_to_closest_cluster assignes given points to K clusters, as part of kmeans implementation 
 def assign_to_closest_cluster(points,centroids,K):
     clusters_with_assigned_points = [ [] for _ in range(K) ]
     for point in points:
@@ -28,10 +30,11 @@ def assign_to_closest_cluster(points,centroids,K):
         clusters_with_assigned_points[index_of_centroid_with_min_dist].append(point)
     return clusters_with_assigned_points
 
-def updateCentroids(centroids, clusters_with_assigned_points, K, dimension):
+# update_centroids updates the centroids of the k clusters until reaching maximal iteration number or convergence
+def update_centroids(centroids, clusters_with_assigned_points, K, dimension):
     convergence = True
     for i in range(K):
-        if not clusters_with_assigned_points[i]:
+        if len(clusters_with_assigned_points[i])==0:
             continue
         num_of_assigned_points = len(clusters_with_assigned_points[i])
         new_centroid = [0.0 for x in range(dimension)]
@@ -45,6 +48,7 @@ def updateCentroids(centroids, clusters_with_assigned_points, K, dimension):
         centroids[i] = new_centroid
     return centroids,convergence
 
+# kmeans implementation
 def kmeans(K,vectors):
     points = vectors.values.tolist()
     dimension = len(points[0])
@@ -53,11 +57,12 @@ def kmeans(K,vectors):
         centroids.append(points[i].copy())
     for i in range(MAX_ITERATIONS):
         clusters_with_assigned_points = assign_to_closest_cluster(points,centroids,K)
-        centroids,convergence = updateCentroids(centroids,clusters_with_assigned_points,K,dimension)
+        centroids,convergence = update_centroids(centroids,clusters_with_assigned_points,K,dimension)
         if convergence:
             break
     return centroids
 
+# gets variables from CMD and validates them
 def get_input_variables():
     if len(sys.argv) != 3:
         symnmf.error_handling()
@@ -65,6 +70,7 @@ def get_input_variables():
     file_name = sys.argv[2]
     return K, file_name
 
+# get_cluster_association returns cluster association score of the given point 
 def get_cluster_association(vector, centroids):
     min_delta = float("inf")
     association = 0
@@ -80,14 +86,25 @@ if __name__ == "__main__":
     vectors = symnmf.get_data_points(file_name)
     N = len(vectors)
     if (K>=N):
-        print("Incorrect number of clusters!")
-        sys.exit(1)
+        symnmf.error_handling()
     points_array=vectors.to_numpy()
     H = symnmf.calculate_decomposition_matrix(points_array,K)
     labels_sym = np.argmax(H, axis=1)
-    sym_score = silhouette_score(points_array, labels_sym)
+    sym_score=None
+    try:
+        sym_score = silhouette_score(points_array, labels_sym)
+    except ValueError:
+        symnmf.error_handling()
+    except Exception:
+        symnmf.error_handling()
     final_centroids = kmeans(K,vectors)
     labels_kmeans = [get_cluster_association(vec, final_centroids) for vec in points_array]
-    kmeans_score = silhouette_score(points_array, labels_kmeans)
+    kmeans_score=None
+    try:
+        kmeans_score = silhouette_score(points_array, labels_kmeans)
+    except ValueError:
+        symnmf.error_handling()
+    except Exception:
+        symnmf.error_handling()
     print(f"nmf: {sym_score:.4f}")
     print(f"kmeans: {kmeans_score:.4f}")

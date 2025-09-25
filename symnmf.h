@@ -46,14 +46,3 @@ int iterateAlgorithm(matrix *H, matrix W);
 int calculateNumOfPoints(char *filename);
 int calculateDimension(char *filename);
 void printDataPoints(dataPoints points);
-
-/* TODO: remove these when you are handing in the assignment? */
-void testMatrixMultiplication();
-void testDistance();
-void testSimilarityMatrix();
-void testDiagonalDegreeMatrix();
-void testNormalizedSimilarityMatrix();
-void testTranspose();
-void testTrace();
-void testSubstractMatrices();
-void testUpdateH();

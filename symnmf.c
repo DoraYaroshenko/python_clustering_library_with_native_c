@@ -42,15 +42,17 @@ int initializeMatrix(int rows, int cols, matrix *newMatrix)
 void freeMatrix(matrix mat)
 {
     int i;
-    for (i = 0; i < mat.numOfRows; i++)
-    {
-        if (mat.matrixEntries[i] != NULL)
-        {
-            free(mat.matrixEntries[i]);
-        }
-    }
     if (mat.matrixEntries != NULL)
+    {
+        for (i = 0; i < mat.numOfRows; i++)
+        {
+            if (mat.matrixEntries[i] != NULL)
+            {
+                free(mat.matrixEntries[i]);
+            }
+        }
         free(mat.matrixEntries);
+    }
 }
 
 int initializeDataPoints(int numOfVectors, int dim, dataPoints *points)
@@ -75,15 +77,19 @@ int initializeDataPoints(int numOfVectors, int dim, dataPoints *points)
 
 void freeDataPoints(dataPoints points)
 {
-    int i;
-    for (i = 0; i < points.numOfPoints; i++)
+    if (points.points != NULL)
     {
-        if (&points.points[i] != NULL)
-            freeVector(points.points[i]);
+        int i;
+        for (i = 0; i < points.numOfPoints; i++)
+        {
+            if (&points.points[i] != NULL)
+                freeVector(points.points[i]);
+        }
+        free(points.points);
     }
-    free(points.points);
 }
 
+/*matrixMultiplication calculates a*b, and saves the result in resMatrix*/
 int matrixMultiplication(matrix a, matrix b, matrix *resMatrix)
 {
     int i, j, k;
@@ -107,6 +113,7 @@ int matrixMultiplication(matrix a, matrix b, matrix *resMatrix)
     return SUCCESS;
 }
 
+/*distance calculates euclidian distance between two vectors*/
 double distance(vector v1, vector v2)
 {
     double sum = 0;
@@ -159,6 +166,7 @@ void printDataPoints(dataPoints points)
     }
 }
 
+/*transpose computes transposed matrix mat, and saves the result in transposedMatrix*/
 int transpose(matrix mat, matrix *transposedMatrix)
 {
     int i, j;
@@ -174,6 +182,7 @@ int transpose(matrix mat, matrix *transposedMatrix)
     return SUCCESS;
 }
 
+/*trace calculates trace of matrix mat*/
 double trace(matrix mat)
 {
     double sum = 0;
@@ -185,6 +194,7 @@ double trace(matrix mat)
     return sum;
 }
 
+/*substractMatrices calculates A-B, and saves the result in result matrix*/
 int substractMatrices(matrix A, matrix B, matrix *result)
 {
     int i, j;
@@ -202,13 +212,17 @@ int substractMatrices(matrix A, matrix B, matrix *result)
     return SUCCESS;
 }
 
+/*updateH updates H as described in 1.4.2*/
 int updateH(matrix H, matrix W, matrix *updatedH)
 {
     matrix WmulH, transposedH, HMulTransposedH, HMulTransposedHMulH;
-    int i, j, result = SUCCESS;
+    int i, j;
+    int result = SUCCESS;
     double denom;
     if (initializeMatrix(H.numOfRows, H.numOfCols, updatedH) == SUCCESS &&
-        matrixMultiplication(W, H, &WmulH) == SUCCESS && transpose(H, &transposedH) == SUCCESS && matrixMultiplication(H, transposedH, &HMulTransposedH) == SUCCESS &&
+        matrixMultiplication(W, H, &WmulH) == SUCCESS &&
+        transpose(H, &transposedH) == SUCCESS &&
+        matrixMultiplication(H, transposedH, &HMulTransposedH) == SUCCESS &&
         matrixMultiplication(HMulTransposedH, H, &HMulTransposedHMulH) == SUCCESS)
     {
         for (i = 0; i < H.numOfRows; i++)
@@ -231,6 +245,7 @@ int updateH(matrix H, matrix W, matrix *updatedH)
     return result;
 }
 
+/*iterateAlgorithm updates H until max iteration number or convergence is reached*/
 int iterateAlgorithm(matrix *H, matrix W)
 {
     int i, j, l;
@@ -269,6 +284,7 @@ void errorHandling()
     exit(1);
 }
 
+/*calculateNumOfPoints calculates the number of points in the given file*/
 int calculateNumOfPoints(char *filename)
 {
     int numOfPoints = 0;
@@ -288,6 +304,7 @@ int calculateNumOfPoints(char *filename)
     return numOfPoints;
 }
 
+/*calculateDimension calculates the dimension of points in the given file*/
 int calculateDimension(char *filename)
 {
     int dimension = 0;
@@ -338,6 +355,7 @@ int readPointsFromFile(char *filename, dataPoints *points)
     return SUCCESS;
 }
 
+/*similarityMatrix computes the similarity matrix and saves in in outputMatrix*/
 int similarityMatrix(dataPoints points, matrix *outputMatrix)
 {
     int i, j, n = points.numOfPoints;
@@ -359,6 +377,7 @@ int similarityMatrix(dataPoints points, matrix *outputMatrix)
     return SUCCESS;
 }
 
+/*diagonalDegreeMatrix calculates diagonal degree matrix of the given points and saves it in outputMatrix*/
 int diagonalDegreeMatrix(dataPoints points, matrix *outputMatrix)
 {
     int n = points.numOfPoints, i, j;
@@ -384,6 +403,7 @@ int diagonalDegreeMatrix(dataPoints points, matrix *outputMatrix)
     return SUCCESS;
 }
 
+/*normalizedSimilarityMatrix computes normalized similarity matrix of given points and saves the output in resMatrix*/
 int normalizedSimilarityMatrix(dataPoints points, matrix *resMatrix)
 {
     matrix similarityMat, degreeMat, mulMat;
@@ -415,22 +435,22 @@ int main(int argc, char **argv)
         return (1);
     goal = argv[1];
     path = argv[2];
-    if (readPointsFromFile(path, &points)==FAIL)
+    if (readPointsFromFile(path, &points) == FAIL)
         errorHandling();
 
     if (strcmp(goal, "sym") == 0)
     {
-        if (similarityMatrix(points, &outputMatrix)==FAIL)
+        if (similarityMatrix(points, &outputMatrix) == FAIL)
             errorHandling();
     }
     else if (strcmp(goal, "ddg") == 0)
     {
-        if (diagonalDegreeMatrix(points, &outputMatrix)==FAIL)
+        if (diagonalDegreeMatrix(points, &outputMatrix) == FAIL)
             errorHandling();
     }
     else if (strcmp(goal, "norm") == 0)
     {
-        if (normalizedSimilarityMatrix(points, &outputMatrix)==FAIL)
+        if (normalizedSimilarityMatrix(points, &outputMatrix) == FAIL)
             errorHandling();
     }
     else
