@@ -2,78 +2,80 @@ import math
 import sys
 import numpy as np
 import pandas as pd
-import symnmfmodule
+import _symnmf
 
 np.random.seed(1234)
 
-def similarity_matrix(points_array):
-    squares_sum = np.sum(points_array**2, axis=1, keepdims=True) # לכל שורה במטריצה מעלה את האיבר בכל עמודה בריבוע וסוכם את העמודות. זה נהיה וקטור עמודה שמכיל את הסכומים הנ״ל בכל שורה
-    squared_sub_mat = squares_sum+squares_sum.T # זה מטריצה שבה xij = |x_i|^2+|x_j|^2
-    squared_sub_mat = squared_sub_mat-2*(points_array @ points_array.T) # מכל איבר איקס איי ג׳יי במטריצה הקודמת יצא לנו להחסיר שתיים כפול מ״פ בין איקס איי לאיקס ג׳יי 
-    # סהכ מתקיים מ״חוק הקוסינוסים״ ש*לא* למדנו עם סמיון: ||x_i - x_j||^2 = ||x_i|| + ||x_j|| - 2*<x_i, x_j> and it matches what we have done so far
-    A = np.exp(-squared_sub_mat/2) # מטריצה לפי ההגדרה, עד כדי זה שהאלכסון לא תואם להגדרה
-    np.fill_diagonal(A, 0) # איפוס האלכסון
-    return A
+def error_handling():
+    print("An Error Has Occurred")
+    sys.exit(1)
 
-def degree_matrix(A):
-    d = np.sum(A, axis=1) # סוכם את האיברים בכל שורה
-    D = np.diag(d) # מציב את האיברים של די, שזה הדרגות שחישבנו קודם, על האלכסון - ושאר המטריצה היא אפסים
-    return D
-
-def normalized_similarity_mat(D, A):
-    d = np.diag(D)
-    D_power = np.diag(1.0 / np.sqrt(d)) # מעלים את האלכסון בחזקת מינוס חצי שזה כמו אחד חלקי שורש ומציבים אותו באלכסון המטריצה החדשה שלנו
-    W = D_inv_sqrt @ A @ D_inv_sqrt # מחשבים את הביטוי שהוגדר
-    return W
-
+# init_H randomly initializes H with values from the interval [0,2*sqrt(m/k)], using graph Laplacian W
 def init_H(W, K):
-    n = W.shape[0]
-    m = W.mean()
+    W_as_array = np.array(W)
+    n = W_as_array.shape[0]
+    m = W_as_array.mean()
     upper = 2*np.sqrt(m/K)
     H = np.random.uniform(0, upper, size=(n, K))
     return H
 
-def printmat(A):
+def print_matrix(A):
     for row in A:
         line = ",".join(f"{val:.4f}" for val in row)
         print(line)
 
-def getInputVariables():
-    #it has to be exactly 4 args - I hope we still need to check that? because apparently there is no need to check the arguments themselves in this assignment?
+# get_input_variable reads CMD arguments
+def get_input_variables():
     if len(sys.argv) != 4:
-        print("An Error Has Occurred")
-        sys.exit(1)
-
-    K = float(sys.argv[1])
+        error_handling()
+    K = int(sys.argv[1])
     goal = sys.argv[2]
     file_name = sys.argv[3]
     return K, goal, file_name
 
-def getDataPoints(file_name):
+# get_data_points reads the datapoints from the given file
+def get_data_points(file_name):
     vectors = pd.read_csv(file_name, header=None)
-    vectors.columns = [f"coordinate {i}" for i in range(df.shape[1])]
+    vectors.columns = [f"coordinate {i}" for i in range(vectors.shape[1])]
     vectors.index.name = "key"
     return vectors
 
-if _name_ == "_main_":
-    K, goal, file_name = getInputVariables() #ok
-    vectors = getObservations(file_name) #ok
-    N = len(vectors) #ok
-    points_array=vectors.to_numpy() # okay, returns actual matrix in numpy form..
+# calculate_decomposition_matrix calculates H
+def calculate_decomposition_matrix(points_array, K):
+    W = _symnmf.norm(points_array)
+    if W is None:
+        error_handling()
+    H = init_H(W, K)
+    H = _symnmf.symnmf(H, W)
+    if H is None:
+        error_handling()
+    return H
 
-    if goal == "symnmf":
-        A = similarity_matrix(points_array) # maybe should use sym method from c file instead.
-        D = degree_matrix(A) # maybe should use ddg method from c file instead
-        W = normalized_similarity_mat(D, A) # should have used norm from c file instead apparently
-        H = init_H(W, K)
-        H = symnmfmodule.symnmf(H, W)
-        print_mat(H)
-    elif goal == "sym":
-        A = symnmfmodule.sym(points_array)
-        print_mat(A)
-    elif goal == "ddg":
-        D = symnmfmodule.ddg(points_array)
-        print_mat(D)
-    else: # goal == "norm"
-        W = symnmfmodule.norm(points_array)
-        print_mat(w)
+if __name__ == "__main__":
+    K, goal, file_name = get_input_variables()
+    vectors = get_data_points(file_name)
+    N = len(vectors)
+    if K>=N or K<=1:
+        error_handling()
+    points_array=vectors.to_numpy()
+    match goal:
+        case "sym":
+            A = _symnmf.sym(points_array)
+            if A is None:
+                error_handling()
+            print_matrix(A)
+        case "symnmf":
+            H = calculate_decomposition_matrix(points_array, K)
+            print_matrix(H)
+        case "ddg":
+            D = _symnmf.ddg(points_array)
+            if D is None:
+                error_handling()
+            print_matrix(D)
+        case "norm":
+            W = _symnmf.norm(points_array)
+            if W is None:
+                error_handling()
+            print_matrix(W)
+        case _:
+            error_handling()

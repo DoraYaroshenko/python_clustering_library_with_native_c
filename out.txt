@@ -1,0 +1,42 @@
+--------
+Testing programs
+--------
+Summary - C:
+[32mgoal [1;3msym[22;23m succeeded[0m
+[32mgoal [1;3mddg[22;23m succeeded[0m
+[32mgoal [1;3mnorm[22;23m succeeded[0m
+Summary - Python:
+[32mgoal [1;3msym[22;23m succeeded[0m
+[32mgoal [1;3mddg[22;23m succeeded[0m
+[32mgoal [1;3mnorm[22;23m succeeded[0m
+[32mgoal [1;3msymnmf[22;23m succeeded[0m
+
+--------
+Testing symnmf extension directly
+--------
+trial 1/5
+trial 2/5
+trial 3/5
+trial 4/5
+trial 5/5
+[32msuccess[0m
+
+--------
+Testing with valgrind
+--------
+Testing C
+[32mgoal [1;3msym[22;23m succeeded[0m
+[32mgoal [1;3mddg[22;23m succeeded[0m
+[32mgoal [1;3mnorm[22;23m succeeded[0m
+
+[33m[3mTesting python is disabled[0m
+
+--------
+Testing analysis.py (format only)
+--------
+trial 1/5
+trial 2/5
+trial 3/5
+trial 4/5
+trial 5/5
+[32msuccess[0m
